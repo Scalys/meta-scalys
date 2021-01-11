@@ -4,7 +4,7 @@ FILESEXTRAPATHS_prepend := "${THISDIR}/patches:${THISDIR}/files:"
 SRCBRANCH = "trustbox-2004"
 SRC_URI = "gitsm://github.com/Scalys/u-boot-qoriq.git;protocol=git;branch=${SRCBRANCH} \
 "
-SRCREV = "9205097362c6f3c39c40eda60b3c40f607670e46"
+SRCREV = "2a94b1d3b666270662be091e93be715f13d1f28e"
 
 DEPENDS += "flex-native bison-native"
 
