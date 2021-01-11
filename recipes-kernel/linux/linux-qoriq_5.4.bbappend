@@ -1,10 +1,10 @@
 LIC_FILES_CHKSUM = "file://COPYING;md5=bbea815ee2795b2f4230826c0c6b8814"
 
-SRCBRANCH="trustbox-2004"
+SRCBRANCH="trustbox-2012"
 SRC_URI = "\
     git://github.com/Scalys/linux-qoriq.git;branch=${SRCBRANCH} \
 "
-SRCREV = "8cdf263cc18a9d0f7509d6b7fbaab3d620c7a656"
+SRCREV = "c5cfb2c0dd62c1d4b3194b2216c1477d9aa23e95"
 
 DEPENDS += "u-boot-mkimage-native"
 
