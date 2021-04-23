@@ -4,11 +4,14 @@ SRCBRANCH="trustbox-2012"
 SRC_URI = "\
     git://github.com/Scalys/linux-qoriq.git;branch=${SRCBRANCH} \
 "
-SRCREV = "c5cfb2c0dd62c1d4b3194b2216c1477d9aa23e95"
+SRCREV = "7d018b4686814271ab82b7bd2437395320ebcb60"
 
 DEPENDS += "u-boot-mkimage-native"
 
 DELTA_KERNEL_DEFCONFIG = "trustbox.config lsdk.conf "
+
+deltask merge_delta_config
+addtask merge_delta_config before do_kernel_localversion after do_patch 
 
 do_uboot_mkimage() {
     # Compress Image
