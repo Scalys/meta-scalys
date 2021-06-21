@@ -6,8 +6,7 @@ LIC_FILES_CHKSUM = ""
 
 require scalys-base-image.inc
 
-
-IMAGE_FSTYPES = "tar.gz ubi ubifs"
+IMAGE_FSTYPES = "wic tar.gz ubi ubifs"
 
 IMAGE_INSTALL += "\
 "
