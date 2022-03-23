@@ -16,7 +16,6 @@ IMAGE_INSTALL += "\
     kernel-devicetree \
     kernel-modules \
     \
-    ppa-optee \
     optee-client-qoriq \
     \
     ppfe-firmware \

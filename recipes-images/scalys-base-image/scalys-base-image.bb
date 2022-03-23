@@ -15,6 +15,8 @@ IMAGE_INSTALL += "\
     iotedge-daemon \
     \
     optee-test-qoriq \
+    u-boot-mmc-boot \
+    composite-firmware \
 "
 
 TOOLCHAIN_HOST_TASK += "nativesdk-cmake"

@@ -8,4 +8,5 @@ SRC_URI = "gitsm://github.com/ms-iot/optee_os.git;protocol=https;branch=ms-iot-o
            file://0001-allow-setting-sysroot-for-libgcc-lookup.patch \
            file://0001-use-python3-instead-of-python.patch \
           "
-OPTEEMACHINE_trustbox = "ls1012grapeboard"
+OPTEEMACHINE_trustbox-edge-101 = "ls1012grapeboard"
+
