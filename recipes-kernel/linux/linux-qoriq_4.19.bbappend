@@ -1,5 +1,5 @@
 SRC_URI = "git://github.com/Scalys/linux-qoriq.git;protocol=git;branch=scalys-4.19"
-SRCREV = "0e2587f8784412662d38b850ff4598673af792a1"
+SRCREV = "8813f0b523cedcea9a54eee8f2450cadac874f13"
 
 DELTA_KERNEL_DEFCONFIG_append_qls1046a-4gb = " qls1046a-4gb.config"
 
