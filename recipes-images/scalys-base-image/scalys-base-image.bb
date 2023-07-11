@@ -11,9 +11,6 @@ WKS_FILE = "${MACHINE}-sdimg.wks"
 IMAGE_FSTYPES = "wic tar.gz ext2.gz"
 
 IMAGE_INSTALL += "\
-    iotedge-cli \
-    iotedge-daemon \
-    \
     optee-test-qoriq \
     u-boot-mmc-boot \
     composite-firmware \
