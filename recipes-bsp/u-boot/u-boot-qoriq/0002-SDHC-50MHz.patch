@@ -1,0 +1,23 @@
+From a5e9de430ca1aa37d39f4c068ccda2b7385211d0 Mon Sep 17 00:00:00 2001
+From: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+Date: Thu, 9 Nov 2023 07:41:05 +0000
+Subject: [PATCH] SDHC 50MHz
+
+Signed-off-by: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+---
+ arch/arm/dts/qls1046a_4gb.dts | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/arch/arm/dts/qls1046a_4gb.dts b/arch/arm/dts/qls1046a_4gb.dts
+index 138dadcae5..0817037f13 100644
+--- a/arch/arm/dts/qls1046a_4gb.dts
++++ b/arch/arm/dts/qls1046a_4gb.dts
+@@ -22,7 +22,7 @@
+ };
+ 
+ &esdhc {
+-	max-frequency = <25000000>;
++	max-frequency = <50000000>;
+ 	status = "okay";
+ };
+ 

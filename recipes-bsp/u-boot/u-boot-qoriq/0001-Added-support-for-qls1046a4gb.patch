@@ -1,0 +1,2314 @@
+From 8ecd6ee3ba89fea535614c265fcfd48e6bd10553 Mon Sep 17 00:00:00 2001
+From: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+Date: Thu, 9 Nov 2023 06:45:09 +0000
+Subject: [PATCH] Added support for qls1046a4gb
+
+Signed-off-by: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+---
+ arch/arm/Kconfig                              |  15 +
+ arch/arm/cpu/armv8/Kconfig                    |   1 +
+ arch/arm/dts/Makefile                         |   2 +
+ arch/arm/dts/qls1046a_4gb.dts                 |  56 +++
+ board/scalys/common/Makefile                  | 103 ++++
+ .../scalys/common/board_configuration_data.c  | 388 ++++++++++++++++
+ .../scalys/common/board_configuration_data.h  |  22 +
+ board/scalys/qls1046a_4gb/Kconfig             |  21 +
+ board/scalys/qls1046a_4gb/Makefile            |  13 +
+ board/scalys/qls1046a_4gb/ddr.c               |  18 +
+ board/scalys/qls1046a_4gb/dragonfruit.c       |  60 +++
+ board/scalys/qls1046a_4gb/dragonfruit.h       |  75 +++
+ board/scalys/qls1046a_4gb/eth.c               | 329 +++++++++++++
+ board/scalys/qls1046a_4gb/qls1046a_4gb.c      | 260 +++++++++++
+ configs/qls1046a_4gb_ifc_nor_defconfig        |  81 ++++
+ configs/qls1046a_4gb_ifc_nor_xfi_defconfig    |  84 ++++
+ configs/qls1046a_4gb_sdcard_defconfig         |  81 ++++
+ configs/qls1046a_4gb_sdcard_xfi_defconfig     |  83 ++++
+ include/configs/qls1046a_4gb.h                | 439 ++++++++++++++++++
+ 19 files changed, 2131 insertions(+)
+ create mode 100644 arch/arm/dts/qls1046a_4gb.dts
+ create mode 100644 board/scalys/common/Makefile
+ create mode 100644 board/scalys/common/board_configuration_data.c
+ create mode 100644 board/scalys/common/board_configuration_data.h
+ create mode 100644 board/scalys/qls1046a_4gb/Kconfig
+ create mode 100644 board/scalys/qls1046a_4gb/Makefile
+ create mode 100644 board/scalys/qls1046a_4gb/ddr.c
+ create mode 100644 board/scalys/qls1046a_4gb/dragonfruit.c
+ create mode 100644 board/scalys/qls1046a_4gb/dragonfruit.h
+ create mode 100644 board/scalys/qls1046a_4gb/eth.c
+ create mode 100644 board/scalys/qls1046a_4gb/qls1046a_4gb.c
+ create mode 100644 configs/qls1046a_4gb_ifc_nor_defconfig
+ create mode 100644 configs/qls1046a_4gb_ifc_nor_xfi_defconfig
+ create mode 100644 configs/qls1046a_4gb_sdcard_defconfig
+ create mode 100644 configs/qls1046a_4gb_sdcard_xfi_defconfig
+ create mode 100644 include/configs/qls1046a_4gb.h
+
+diff --git a/arch/arm/Kconfig b/arch/arm/Kconfig
+index 39b6a2b1b5..b21a62efa7 100644
+--- a/arch/arm/Kconfig
++++ b/arch/arm/Kconfig
+@@ -1766,6 +1766,20 @@ config TARGET_LS1046AFRWY
+ 	  development platform that supports the QorIQ LS1046A
+ 	  Layerscape Architecture processor.
+ 
++config TARGET_QLS1046A_4GB
++	bool "Support Te2v QV3 on Scalys daughter board"
++	select ARCH_LS1046A
++	select ARM64
++	select ARMV8_MULTIENTRY
++	select ARCH_SUPPORT_TFABOOT
++	select BOARD_EARLY_INIT_F
++	select BOARD_LATE_INIT
++	select DM_SPI_FLASH if DM_SPI
++	select GPIO_EXTRA_HEADER
++	imply SCSI
++	help
++	  Support Te2v QV3 on Scalys daughter board.
++
+ config TARGET_SL28
+ 	bool "Support sl28"
+ 	select ARCH_LS1028A
+@@ -2270,6 +2284,7 @@ source "board/vscom/baltos/Kconfig"
+ source "board/phytium/durian/Kconfig"
+ source "board/xen/xenguest_arm64/Kconfig"
+ source "board/keymile/Kconfig"
++source "board/scalys/qls1046a_4gb/Kconfig"
+ 
+ source "arch/arm/Kconfig.debug"
+ 
+diff --git a/arch/arm/cpu/armv8/Kconfig b/arch/arm/cpu/armv8/Kconfig
+index 9967376eca..b83f9a384e 100644
+--- a/arch/arm/cpu/armv8/Kconfig
++++ b/arch/arm/cpu/armv8/Kconfig
+@@ -109,6 +109,7 @@ config PSCI_RESET
+ 		   !TARGET_LS1012ARDB && !TARGET_LS1012AFRDM && \
+ 		   !TARGET_LS1012A2G5RDB && !TARGET_LS1012AQDS && \
+ 		   !TARGET_LS1012AFRWY && \
++		   !TARGET_QLS1046A_4GB && \
+ 		   !TARGET_LS1028ARDB && !TARGET_LS1028AQDS && \
+ 		   !TARGET_LS1043ARDB && !TARGET_LS1043AQDS && \
+ 		   !TARGET_LS1046ARDB && !TARGET_LS1046AQDS && \
+diff --git a/arch/arm/dts/Makefile b/arch/arm/dts/Makefile
+index 709fdaecd7..8ea5f19b89 100644
+--- a/arch/arm/dts/Makefile
++++ b/arch/arm/dts/Makefile
+@@ -1296,6 +1296,8 @@ dtb-$(CONFIG_TARGET_EA_LPC3250DEVKITV2) += lpc3250-ea3250.dtb
+ 
+ dtb-$(CONFIG_ARCH_QEMU) += qemu-arm.dtb qemu-arm64.dtb
+ 
++dtb-$(CONFIG_TARGET_QLS1046A_4GB) += qls1046a_4gb.dtb
++
+ include $(srctree)/scripts/Makefile.dts
+ 
+ targets += $(dtb-y)
+diff --git a/arch/arm/dts/qls1046a_4gb.dts b/arch/arm/dts/qls1046a_4gb.dts
+new file mode 100644
+index 0000000000..138dadcae5
+--- /dev/null
++++ b/arch/arm/dts/qls1046a_4gb.dts
+@@ -0,0 +1,56 @@
++// SPDX-License-Identifier: GPL-2.0+ OR X11
++/*
++ * Device Tree Include file for QLS1046A 4GB dev board.
++ *
++ * Copyright 2023 Scalys
++ *
++ */
++
++/dts-v1/;
++/include/ "fsl-ls1046a.dtsi"
++
++/ {
++	model = "QLS1046A 4GB dev board";
++
++	aliases {
++		spi1 = &dspi0;
++	};
++};
++
++&dspi0 {
++	status = "okay";
++};
++
++&esdhc {
++	max-frequency = <25000000>;
++	status = "okay";
++};
++
++&usb2 {
++	status = "disabled";
++};
++
++&ifc {
++	#address-cells = <2>;
++	#size-cells = <1>;
++	ranges = <0x0 0x0 0x0 0x7e800000 0x00010000
++		  0x1 0x0 0x0 0x60000000 0x02000000>;
++	status = "okay";
++
++
++	nand@0,0 {
++		compatible = "fsl,ifc-nand";
++		#address-cells = <1>;
++		#size-cells = <1>;
++		reg = <0x0 0x0 0x10000>;
++	};
++
++	nor@1,0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "cfi-flash";
++		reg = <0x1 0x0 0x2000000>;
++		bank-width = <1>;
++		device-width = <1>;
++	};
++};
+diff --git a/board/scalys/common/Makefile b/board/scalys/common/Makefile
+new file mode 100644
+index 0000000000..a3f2d391da
+--- /dev/null
++++ b/board/scalys/common/Makefile
+@@ -0,0 +1,103 @@
++# SPDX-License-Identifier: GPL-2.0+
++#
++# (C) Copyright 2006
++# Wolfgang Denk, DENX Software Engineering, wd@denx.de.
++
++obj-y	+= board_configuration_data.o
++
++MINIMAL=
++
++ifdef CONFIG_SPL_BUILD
++ifdef CONFIG_SPL_INIT_MINIMAL
++MINIMAL=y
++endif
++endif
++
++ifdef MINIMAL
++# necessary to create built-in.o
++obj- := __dummy__.o
++else
++# include i2c_common.o once if either VID or FSL_USE_PCA9547_MUX
++I2C_COMMON=
++ifdef CONFIG_VID
++I2C_COMMON=y
++endif
++ifdef CONFIG_FSL_USE_PCA9547_MUX
++I2C_COMMON=y
++endif
++
++obj-$(CONFIG_FSL_CADMUS)	+= ../../freescale/common/cadmus.o
++obj-$(CONFIG_FSL_VIA)		+= ../../freescale/common/cds_via.o
++obj-$(CONFIG_FMAN_ENET)	+= ../../freescale/common/fman.o
++obj-$(CONFIG_FSL_PIXIS)	+= ../../freescale/common/pixis.o
++ifndef CONFIG_SPL_BUILD
++obj-$(CONFIG_FSL_NGPIXIS)	+= ../../freescale/common/ngpixis.o
++endif
++obj-$(I2C_COMMON)		+= ../../freescale/common/i2c_common.o
++obj-$(CONFIG_FSL_USE_PCA9547_MUX)		+= ../../freescale/common/i2c_mux.o
++obj-$(CONFIG_$(SPL_)VID)	+= ../../freescale/common/vid.o
++obj-$(CONFIG_FSL_QIXIS)	+= ../../freescale/common/qixis.o
++obj-$(CONFIG_PQ_MDS_PIB)	+= ../../freescale/common/pq-mds-pib.o
++ifndef CONFIG_SPL_BUILD
++obj-$(CONFIG_ID_EEPROM)	+= ../../freescale/common/sys_eeprom.o
++endif
++obj-$(CONFIG_FSL_SGMII_RISER)	+= ../../freescale/common/sgmii_riser.o
++ifndef CONFIG_RAMBOOT_PBL
++obj-$(CONFIG_FSL_FIXED_MMC_LOCATION)	+= ../../freescale/common/sdhc_boot.o
++endif
++
++obj-$(CONFIG_FSL_DIU_CH7301)	+= ../../freescale/common/diu_ch7301.o
++
++ifdef CONFIG_ARM
++obj-$(CONFIG_DEEP_SLEEP)		+= ../../freescale/common/arm_sleep.o
++else
++obj-$(CONFIG_DEEP_SLEEP)		+= ../../freescale/common/mpc85xx_sleep.o
++endif
++
++obj-$(CONFIG_FSL_DCU_SII9022A)    += ../../freescale/common/dcu_sii9022a.o
++
++obj-$(CONFIG_TARGET_MPC8548CDS)	+= ../../freescale/common/cds_pci_ft.o
++
++obj-$(CONFIG_TARGET_MPC8536DS)	+= ../../freescale/common/ics307_clk.o
++obj-$(CONFIG_TARGET_P1022DS)		+= ../../freescale/common/ics307_clk.o
++obj-$(CONFIG_P2020DS)		+= ../../freescale/common/ics307_clk.o
++obj-$(CONFIG_TARGET_P3041DS)		+= ../../freescale/common/ics307_clk.o
++obj-$(CONFIG_TARGET_P4080DS)		+= ../../freescale/common/ics307_clk.o
++obj-$(CONFIG_TARGET_P5040DS)		+= ../../freescale/common/ics307_clk.o
++obj-$(CONFIG_VSC_CROSSBAR)    += ../../freescale/common/vsc3316_3308.o
++obj-$(CONFIG_ZM7300)		+= ../../freescale/common/zm7300.o
++obj-$(CONFIG_POWER_PFUZE100)	+= ../../freescale/common/pfuze.o
++obj-$(CONFIG_DM_PMIC_PFUZE100)	+= ../../freescale/common/pfuze.o
++obj-$(CONFIG_POWER_MC34VR500)	+= ../../freescale/common/mc34vr500.o
++obj-$(CONFIG_MXC_EPDC)		+= ../../freescale/common/epdc_setup.o
++ifneq (,$(filter $(SOC), mx25 mx31 mx35 mx5 mx6 mx7 mx7ulp imx8 imx8m vf610 imx8ulp imx9))
++obj-y				+= ../../freescale/common/mmc.o
++endif
++ifdef CONFIG_FSL_FASTBOOT
++obj-${CONFIG_ANDROID_RECOVERY} += ../../freescale/common/recovery_keypad.o
++endif
++
++obj-$(CONFIG_LS102XA_STREAM_ID)	+= ../../freescale/common/ls102xa_stream_id.o
++
++obj-$(CONFIG_EMC2305)              += ../../freescale/common/emc2305.o
++obj-$(CONFIG_QSFP_EEPROM)	+= ../../freescale/common/qsfp_eeprom.o
++
++# deal with common files for P-series corenet based devices
++obj-$(CONFIG_TARGET_P2041RDB)	+= ../../freescale/common/p_corenet/
++obj-$(CONFIG_TARGET_P3041DS)	+= ../../freescale/common/p_corenet/
++obj-$(CONFIG_TARGET_P4080DS)	+= ../../freescale/common/p_corenet/
++obj-$(CONFIG_TARGET_P5020DS)	+= ../../freescale/common/p_corenet/
++obj-$(CONFIG_TARGET_P5040DS)	+= ../../freescale/common/p_corenet/
++
++obj-$(CONFIG_LAYERSCAPE_NS_ACCESS)	+= ../../freescale/common/ns_access.o
++
++ifdef CONFIG_NXP_ESBC
++obj-$(CONFIG_CMD_ESBC_VALIDATE) += ../../freescale/common/fsl_validate.o ../../freescale/common/cmd_esbc_validate.o
++endif
++obj-$(CONFIG_CHAIN_OF_TRUST) += ../../freescale/common/fsl_chain_of_trust.o
++
++ifndef CONFIG_SPL_BUILD
++obj-$(CONFIG_USB_TCPC) += ../../freescale/common/tcpc.o
++endif
++
++endif
+diff --git a/board/scalys/common/board_configuration_data.c b/board/scalys/common/board_configuration_data.c
+new file mode 100644
+index 0000000000..f8898a55b9
+--- /dev/null
++++ b/board/scalys/common/board_configuration_data.c
+@@ -0,0 +1,388 @@
++/*
++ * Copyright 2020 Scalys B.V.
++ * opensource@scalys.com
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#include <command.h>
++#include <common.h>
++#include <linux/ctype.h>
++#include <linux/libfdt.h>
++#include <fdt_support.h>
++
++#include <i2c.h>
++#include <linux/errno.h>
++#include <malloc.h>
++
++#include "board_configuration_data.h"
++
++DECLARE_GLOBAL_DATA_PTR;
++
++int add_mac_addressess_to_env(const void* blob)
++{
++	const char *propname;
++	const void *value;
++	int prop_offset, len;
++	int count = 0;
++	char mac_string[19], eth_string[10];
++	uint8_t mac_address[6];
++
++	if (fdt_check_header(blob) != 0) {
++		printf( "Board Configuration Data FDT corrupt\n");
++		return -1;
++	}
++
++	int nodeoff = fdt_path_offset(blob, "/network");
++
++	if (nodeoff < 0) {
++		printf("Network node not found\n");
++		return -1;
++	}
++	for (prop_offset = fdt_first_property_offset(blob, nodeoff);
++			prop_offset > 0;
++			prop_offset = fdt_next_property_offset(blob, prop_offset)) {
++		value = fdt_getprop_by_offset(blob, prop_offset,
++				&propname, &len);
++		if (!value)
++			return -EINVAL;
++
++		memcpy(mac_address, value, 6);
++
++		/* ret = fdtdec_get_byte_array( blob, prop_offset, propname, mac_address, 6 ); */
++
++		if (count) {
++			snprintf(eth_string, sizeof(eth_string), "eth%iaddr", count);
++		}
++		else {
++			snprintf(eth_string, sizeof(eth_string), "ethaddr");
++		}
++
++		snprintf(mac_string, sizeof(mac_string), 
++			"%02x:%02x:%02x:%02x:%02x:%02x",
++			mac_address[0], mac_address[1], mac_address[2], 
++			mac_address[3], mac_address[4], mac_address[5]
++		);
++
++		printf("%s : [ %s ]\n", propname, mac_string );
++
++		env_set( eth_string, mac_string);
++
++		count++;
++	}
++	printf("Done reading BCD\n");
++
++	return 0;
++}
++
++const void* get_boardinfo_eeprom(void)
++{
++	uint32_t bcd_data_lenght;
++	uint8_t *bcd_data = NULL;
++	uint32_t calculated_crc, received_crc;
++	int dtb_length;
++	int old_i2c_bus;
++	int ret = 0;
++
++	old_i2c_bus = i2c_get_bus_num();
++
++	/* Set the selected I2C interface to the correct bus */
++	i2c_set_bus_num(BCD_I2C_BUS);
++
++	/* Read the last 4 bytes to determine the lenght of the DTB data */
++	ret = i2c_read(BCD_I2C_ADDRESS, (BCD_EEPROM_SIZE-4), 2, (uint8_t*) &bcd_data_lenght, 4 );
++	if (ret != 0) {
++		printf("Error reading bcd length\n");
++		errno = -ENODEV;
++		goto err_no_free;
++	}
++
++	/* Convert lenght from big endianess to architecture endianess */
++	bcd_data_lenght = ntohl(bcd_data_lenght);
++	printf("bcd_data_lenght = %i\n", bcd_data_lenght );	
++
++	if (bcd_data_lenght > BCD_EEPROM_SIZE ) {
++		printf("BCD data length error %02x %02x %02x %02x\n", 
++		      ( (uint8_t*) &bcd_data_lenght)[0],
++		      ( (uint8_t*) &bcd_data_lenght)[1],
++		      ( (uint8_t*) &bcd_data_lenght)[2],
++		      ( (uint8_t*) &bcd_data_lenght)[3] );
++		errno = -EMSGSIZE;
++		goto err_no_free;
++	}
++
++	/* Allocate, and verify memory for the BCD data */
++	bcd_data = (uint8_t*) malloc(bcd_data_lenght);
++	if (bcd_data == NULL) {
++		printf("Error locating memory for BCD data\n");
++		goto err_no_free;
++	}
++	printf("Allocated memory for BCD data\n");
++
++	/* Read the DTB BCD data to memory */
++	ret = i2c_read(BCD_I2C_ADDRESS, (BCD_EEPROM_SIZE-bcd_data_lenght), 2, (uint8_t*) bcd_data, bcd_data_lenght );
++	printf("Read data from I2C bus\n");
++
++	if (ret != 0) {
++		printf("Error reading complete BCD data from EEPROM\n");
++		errno = -ENOMEM;
++		goto err_free;
++	}
++	dtb_length = bcd_data_lenght - BCD_LENGTH_SIZE - BCD_HASH_SIZE;
++
++	/* Calculate CRC on read DTB data */
++	calculated_crc = crc32( 0, bcd_data, dtb_length);
++
++	/* Received CRC is packed after the DTB data */
++	received_crc = *((uint32_t*) &bcd_data[dtb_length]);
++
++	/* Convert CRC from big endianess to architecture endianess */
++	received_crc = ntohl(received_crc);
++
++	if (calculated_crc !=  received_crc) {
++		printf("Checksum error. expected %08x, got %08x\n",
++			calculated_crc, received_crc);
++		errno = -EBADMSG;
++		goto err_free;
++	}
++
++	/* Everything checked out, return the BCD data.
++	 * The caller is expected to free this data */
++	return bcd_data;
++
++err_free:
++	/* free the allocated buffer */
++	free(bcd_data);
++
++err_no_free:
++	/* Set the selected I2C interface back to the original bus */
++	i2c_set_bus_num(old_i2c_bus);
++
++	return NULL;
++}
++
++#ifndef CONFIG_SPL_BUILD
++
++#ifndef CONFIG_CMD_FDT_MAX_DUMP
++#define CONFIG_CMD_FDT_MAX_DUMP 64
++#endif
++
++/*
++ * Heuristic to guess if this is a string or concatenated strings.
++ */
++
++static int is_printable_string(const void *data, int len)
++{
++	const char *s = data;
++
++	/* zero length is not */
++	if (len == 0)
++		return 0;
++
++	/* must terminate with zero or '\n' */
++	if (s[len - 1] != '\0' && s[len - 1] != '\n')
++		return 0;
++
++	/* printable or a null byte (concatenated strings) */
++	while (((*s == '\0') || isprint(*s) || isspace(*s)) && (len > 0)) {
++		/*
++		 * If we see a null, there are three possibilities:
++		 * 1) If len == 1, it is the end of the string, printable
++		 * 2) Next character also a null, not printable.
++		 * 3) Next character not a null, continue to check.
++		 */
++		if (s[0] == '\0') {
++			if (len == 1)
++				return 1;
++			if (s[1] == '\0')
++				return 0;
++		}
++		s++;
++		len--;
++	}
++
++	/* Not the null termination, or not done yet: not printable */
++	if (*s != '\0' || (len != 0))
++		return 0;
++
++	return 1;
++}
++
++/*
++ * Print the property in the best format, a heuristic guess.  Print as
++ * a string, concatenated strings, a byte, word, double word, or (if all
++ * else fails) it is printed as a stream of bytes.
++ */
++static void print_data(const void *data, int len)
++{
++	int j;
++
++	/* no data, don't print */
++	if (len == 0)
++		return;
++
++	/*
++	 * It is a string, but it may have multiple strings (embedded '\0's).
++	 */
++	if (is_printable_string(data, len)) {
++		puts("\"");
++		j = 0;
++		while (j < len) {
++			if (j > 0)
++				puts("\", \"");
++			puts(data);
++			j    += strlen(data) + 1;
++			data += strlen(data) + 1;
++		}
++		puts("\"");
++		return;
++	}
++
++	if ((len %4) == 0) {
++		if (len > CONFIG_CMD_FDT_MAX_DUMP)
++			printf("* 0x%p [0x%08x]", data, len);
++		else {
++			const __be32 *p;
++
++			printf("<");
++			for (j = 0, p = data; j < len/4; j++)
++				printf("0x%08x%s", fdt32_to_cpu(p[j]),
++					j < (len/4 - 1) ? " " : "");
++			printf(">");
++		}
++	} else { /* anything else... hexdump */
++		if (len > CONFIG_CMD_FDT_MAX_DUMP)
++			printf("* 0x%p [0x%08x]", data, len);
++		else {
++			const u8 *s;
++
++			printf("[");
++			for (j = 0, s = data; j < len; j++)
++				printf("%02x%s", s[j], j < len - 1 ? " " : "");
++			printf("]");
++		}
++	}
++}
++
++/*
++ * Recursively print (a portion of) the working_fdt.  The depth parameter
++ * determines how deeply nested the fdt is printed.
++ */
++#define MAX_LEVEL 4
++static int bcd_fdt_print(const void* address, int depth)
++{
++	static char tabs[MAX_LEVEL+1] =
++		"\t\t\t\t\t";
++	const void *nodep;	/* property node pointer */
++	int  nodeoffset;	/* node offset from libfdt */
++	int  nextoffset;	/* next node offset from libfdt */
++	uint32_t tag;		/* tag */
++	int  len;		/* length of the property */
++	int  level = 0;		/* keep track of nesting level */
++	const struct fdt_property *fdt_prop;
++	const char *pathp;
++
++	nodeoffset = fdt_path_offset (address, "/");
++	if (nodeoffset < 0) {
++		/*
++		 * Not found or something else bad happened.
++		 */
++		printf ("libfdt fdt_path_offset() returned %s\n",
++			fdt_strerror(nodeoffset));
++		return 1;
++	}
++
++	/*
++	 * The user passed in a node path and no property,
++	 * print the node and all subnodes.
++	 */
++	while(level >= 0) {
++		tag = fdt_next_tag(address, nodeoffset, &nextoffset);
++		switch(tag) {
++		case FDT_BEGIN_NODE:
++			pathp = fdt_get_name(address, nodeoffset, NULL);
++			if (level <= depth) {
++				if (pathp == NULL)
++					pathp = "/* NULL pointer error */";
++				if (*pathp == '\0')
++					pathp = "/";	/* root is nameless */
++				printf("%s%s {\n",
++					&tabs[MAX_LEVEL - level], pathp);
++			}
++			level++;
++			if (level >= MAX_LEVEL) {
++				printf("Nested too deep, aborting.\n");
++				return 1;
++			}
++			break;
++		case FDT_END_NODE:
++			level--;
++			if (level <= depth)
++				printf("%s};\n", &tabs[MAX_LEVEL - level]);
++			if (level == 0) {
++				level = -1;		/* exit the loop */
++			}
++			break;
++		case FDT_PROP:
++			fdt_prop = fdt_offset_ptr(address, nodeoffset,
++					sizeof(*fdt_prop));
++			pathp    = fdt_string(address,
++					fdt32_to_cpu(fdt_prop->nameoff));
++			len      = fdt32_to_cpu(fdt_prop->len);
++			nodep    = fdt_prop->data;
++			if (len < 0) {
++				printf ("libfdt fdt_getprop(): %s\n",
++					fdt_strerror(len));
++				return 1;
++			} else if (len == 0) {
++				/* the property has no value */
++				if (level <= depth)
++					printf("%s%s;\n",
++						&tabs[MAX_LEVEL - level],
++						pathp);
++			} else {
++				if (level <= depth) {
++					printf("%s%s = ",
++						&tabs[MAX_LEVEL - level],
++						pathp);
++					print_data (nodep, len);
++					printf(";\n");
++				}
++			}
++			break;
++		case FDT_NOP:
++			printf("%s/* NOP */\n", &tabs[MAX_LEVEL - level]);
++			break;
++		case FDT_END:
++			return 1;
++		default:
++			if (level <= depth)
++				printf("Unknown tag 0x%08X\n", tag);
++			return 1;
++		}
++		nodeoffset = nextoffset;
++	}
++	return 0;
++}
++
++int do_bcdinfo(struct cmd_tbl *cmdtp, int flag, int argc, char * const argv[])
++{
++	const void* bcd_dtc_blob;
++	int ret = 0;
++	
++	bcd_dtc_blob = get_boardinfo_eeprom();
++
++	if (bcd_dtc_blob != NULL) {
++		bcd_fdt_print(bcd_dtc_blob, 4);
++	}
++	
++	return ret;
++}
++
++/* U_BOOT_CMD(name,maxargs,repeatable,command,"usage","help") */
++U_BOOT_CMD(
++	bcdinfo,	1,	1,	do_bcdinfo,
++	"Show the Board Configuration Data (stored in eeprom)",
++	""
++);
++#endif
+diff --git a/board/scalys/common/board_configuration_data.h b/board/scalys/common/board_configuration_data.h
+new file mode 100644
+index 0000000000..14cbec0fd3
+--- /dev/null
++++ b/board/scalys/common/board_configuration_data.h
+@@ -0,0 +1,22 @@
++#ifndef _BCD_H
++#define _BCD_H
++
++#define BCD_LENGTH_SIZE	4
++#define BCD_HASH_SIZE	4
++
++#ifndef BCD_I2C_BUS
++#define BCD_I2C_BUS 0
++#endif
++
++#ifndef BCD_I2C_ADDRESS
++#define BCD_I2C_ADDRESS 0x51
++#endif
++
++#ifndef BCD_EEPROM_SIZE
++#define BCD_EEPROM_SIZE 0x10000
++#endif
++
++const void* get_boardinfo_eeprom(void);
++int add_mac_addressess_to_env(const void* blob);
++
++#endif /* _BCD_H */
+diff --git a/board/scalys/qls1046a_4gb/Kconfig b/board/scalys/qls1046a_4gb/Kconfig
+new file mode 100644
+index 0000000000..be67fa1669
+--- /dev/null
++++ b/board/scalys/qls1046a_4gb/Kconfig
+@@ -0,0 +1,21 @@
++if TARGET_QLS1046A_4GB
++
++config SYS_BOARD
++	default "qls1046a_4gb"
++
++config SYS_VENDOR
++	default "scalys"
++
++config SYS_SOC
++	default "fsl-layerscape"
++
++config SYS_CONFIG_NAME
++	default "qls1046a_4gb"
++	
++config NOR
++	bool "Support for NOR flash"
++	default y
++	
++source "board/freescale/common/Kconfig"
++
++endif
+diff --git a/board/scalys/qls1046a_4gb/Makefile b/board/scalys/qls1046a_4gb/Makefile
+new file mode 100644
+index 0000000000..77e148b184
+--- /dev/null
++++ b/board/scalys/qls1046a_4gb/Makefile
+@@ -0,0 +1,13 @@
++#
++# Copyright 2020 Scalys
++#
++# SPDX-License-Identifier:	GPL-2.0+
++#
++
++UBOOTINCLUDE += -I$(srctree)/board/$(VENDOR)/common/
++
++obj-y	+= ddr.o
++obj-y	+= qls1046a_4gb.o
++obj-y	+= eth.o
++obj-y 	+= dragonfruit.o
++
+diff --git a/board/scalys/qls1046a_4gb/ddr.c b/board/scalys/qls1046a_4gb/ddr.c
+new file mode 100644
+index 0000000000..d46ee825c4
+--- /dev/null
++++ b/board/scalys/qls1046a_4gb/ddr.c
+@@ -0,0 +1,18 @@
++// SPDX-License-Identifier: GPL-2.0+
++/*
++ * Copyright 2019 NXP
++ */
++
++#include <common.h>
++#include <fsl_ddr_sdram.h>
++#include <asm/global_data.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++int fsl_initdram(void)
++{
++	gd->ram_size = 0x100000000uL;//tfa_get_dram_size();
++
++	return 0;
++}
++
+diff --git a/board/scalys/qls1046a_4gb/dragonfruit.c b/board/scalys/qls1046a_4gb/dragonfruit.c
+new file mode 100644
+index 0000000000..003fc78975
+--- /dev/null
++++ b/board/scalys/qls1046a_4gb/dragonfruit.c
+@@ -0,0 +1,60 @@
++/*
++ * Copyright 2021 Scalys B.V.
++ * opensource@scalys.com
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#include <common.h>
++#include "dragonfruit.h"
++#include <asm/io.h>
++#include <i2c.h>
++
++int scalys_carrier_init_pcie()
++{
++	uint8_t i2c_data;
++	u32 val;
++	struct ccsr_gpio *pgpio2 = (void *)(GPIO2_BASE_ADDR);
++
++	/* Set SLOT4_REFCLK_OE_N_GPIO to low */
++	i2c_set_bus_num(0);
++	i2c_read(MOD_I2C_IO_ADDR, 0x0D, 1, &i2c_data, 1);
++	i2c_data &= ~SLOT4_REFCLK_OE_N_GPIO;
++	i2c_write(MOD_I2C_IO_ADDR, 0x0D, 1, &i2c_data, 1);
++	i2c_read(MOD_I2C_IO_ADDR, 0x05, 1, &i2c_data, 1);
++	i2c_data &= ~SLOT4_REFCLK_OE_N_GPIO;
++	i2c_write(MOD_I2C_IO_ADDR, 0x05, 1, &i2c_data, 1);
++
++	/* Set PEX_PERST_N_GPIO and PEX_REFCLK_SEL_GPIO to high */
++	val = in_be32(&pgpio2->gpdir) | PEX_PERST_N_GPIO | PEX_REFCLK_SEL_GPIO;
++	out_be32(&pgpio2->gpdir, val);
++	val = in_be32(&pgpio2->gpdat) | PEX_PERST_N_GPIO;
++	val &= ~PEX_REFCLK_SEL_GPIO;
++	out_be32(&pgpio2->gpdat, val);
++
++	return 0;
++}
++
++int scalys_carrier_setup_muxing()
++{
++	u32 val;
++	struct ccsr_gpio *pgpio2 = (void *)(GPIO2_BASE_ADDR);
++
++	/*
++	 * Sets SERDES lanes as follows:
++	 * SD1 D to SFP+ on X600 (via retimer) - unused for now
++	 * SD1 C to SFP+ on X600 (via retimer) - unused for now
++	 * SD1 B to SFP on X600 - unused for now
++	 * SD1 A to SFP on X600 - unused for now
++	 * SD2 A-D: 4x PCIe on X704
++	 */
++	val = in_be32(&pgpio2->gpdir) | MUX_SER0_1_SEL_GPIO | MUX_SER2_3_SEL_GPIO | MUX_SER5_6_SEL_GPIO;
++	out_be32(&pgpio2->gpdir, val);
++	val = in_be32(&pgpio2->gpdat) | MUX_SER0_1_SEL_GPIO | MUX_SER2_3_SEL_GPIO;
++	val &= ~MUX_SER5_6_SEL_GPIO;
++	out_be32(&pgpio2->gpdat, val);
++
++	/* SERDES clock is already enabled */
++
++	return 0;
++}
+diff --git a/board/scalys/qls1046a_4gb/dragonfruit.h b/board/scalys/qls1046a_4gb/dragonfruit.h
+new file mode 100644
+index 0000000000..243eb4f1bf
+--- /dev/null
++++ b/board/scalys/qls1046a_4gb/dragonfruit.h
+@@ -0,0 +1,75 @@
++/*
++ * Copyright 2021 Scalys B.V.
++ * opensource@scalys.com
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++
++#ifndef _DRAGON_FRUIT_H
++#define _DRAGON_FRUIT_H
++
++#define GPIO_BIT_OFFSET(_BIT_)	(0x80000000u >> _BIT_)
++
++/*
++ * GPIO bank 2
++ */
++/* QSPI_B_DATA0/IFC_PAR0/GPIO2_13/FTM6_CH0 */
++#define PEX_PERST_N_GPIO        GPIO_BIT_OFFSET(13)
++/* QSPI_B_DATA1/IFC_PAR1/GPIO2_14/FTM6_CH1 */
++#define PEX_REFCLK_SEL_GPIO     GPIO_BIT_OFFSET(14)
++/* QSPI_B_DATA2/IFC_PERR_B/GPIO2_15/ FTM6_EXTCLK */
++#define ETH1_RESET_N_3V3_GPIO   GPIO_BIT_OFFSET(15)
++/* IFC_A25/GPIO2_25/ QSPI_A_DATA3/FTM5_CH0/ IFC_CS4_B/IFC_RB2_B */
++#define MUX_SER0_1_SEL_GPIO     GPIO_BIT_OFFSET(25)
++/* IFC_A26/GPIO2_26/ FTM5_CH1/IFC_CS5_B/IFC_RB3_B */
++#define MUX_SER2_3_SEL_GPIO     GPIO_BIT_OFFSET(26)
++/* IFC_A27/GPIO2_27/ FTM5_EXTCLK/IFC_CS6_B */
++#define MUX_SER5_6_SEL_GPIO     GPIO_BIT_OFFSET(27)
++/*
++ * GPIO bank 4
++ */
++/* IIC2_SDA/GPIO4_3/ SDHC_WP/FTM3_QD_PHB */
++#define N_SDHC_CD_B_GPIO        GPIO_BIT_OFFSET(3)
++
++/*
++ * TCA6424 I2C GPIO expander on carrier
++ */
++#define CAR_I2C_IO_ADDR         0x22
++/*
++ * PORT 2
++ */
++#define TX_DISABLE_GPIO         0x4
++
++/*
++ * TCA6424 I2C GPIO expander on module
++ * Possible TODO: move to other module related header file
++ */
++#define MOD_I2C_IO_ADDR         0x23
++/*
++ * PORT 1
++ */
++/* Reset for CS4315 XFI retimer (IFC_CS_N4) */
++#define EDC_RST_N_3V3_GPIO      0x08
++/* Clock enable PCIe slots (IFC_CS_N7) */
++#define SLOT4_REFCLK_OE_N_GPIO  0x40
++/*
++ * PORT 2
++ */
++/* SGMII0 LINKSTAT (N_DMA1_DREQ0_B) */
++#define SGMII0_LINKSTAT_GPIO    0x1
++/* SGMII0 ACT (N_DMA1_DACK0_B) */
++#define SGMII0_ACT_GPIO         0x2
++/* SGMII1 LINKSTAT (N_DMA1_DDONE_B) */
++#define SGMII1_LINKSTAT_GPIO    0x4
++/* SGMII1 ACT (N_DMA2_DREQ0_B) */
++#define SGMII1_ACT_GPIO         0x8
++/* Reset for RGMII PHY 1 (N_DMA2_DDONE_B) */
++#define ETH2_RESET_N_3V3_GPIO   0x20
++#define DEBUG_LED_GREEN_GPIO    0x40
++#define DEBUG_LED_RED_GPIO      0x80
++
++int scalys_carrier_init_pcie(void);
++int scalys_carrier_setup_muxing(void);
++
++#endif /* _DRAGON_FRUIT_H */
+diff --git a/board/scalys/qls1046a_4gb/eth.c b/board/scalys/qls1046a_4gb/eth.c
+new file mode 100644
+index 0000000000..ba27bc72fe
+--- /dev/null
++++ b/board/scalys/qls1046a_4gb/eth.c
+@@ -0,0 +1,329 @@
++/*
++ * Copyright 2016 Freescale Semiconductor, Inc.
++ *           2021 Scalys
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#include <common.h>
++#include <asm/io.h>
++#include <linux/delay.h>
++#include <netdev.h>
++#include <fm_eth.h>
++#include <fsl_dtsec.h>
++#include <fsl_mdio.h>
++#include <malloc.h>
++#include "../../freescale/common/fman.h"
++#include "dragonfruit.h"
++#include <i2c.h>
++
++static int scalys_carrier_init_rgmii_phy0(int enable);
++static int scalys_carrier_init_rgmii_phy1(int enable);
++static int scalys_carrier_init_sfp_phys(void);
++static int scalys_carrier_init_retimer(int enable);
++
++/* Tested module(s):
++ * FCLF-8522, UF-RJ45-1G, JD089BST
++ */
++uint8_t sfp_phy_config[][2] = {
++	{ 0x1b, 0x90 }, /* Enable SGMII mode */
++	{ 0x1b, 0x84 },
++	{ 0x09, 0x0F }, /* Advertise 1000BASE-T H/Full */
++	{ 0x09, 0x00 },
++	{ 0x00, 0x81 }, /* Apply software reset */
++	{ 0x00, 0x40 },
++	{ 0x04, 0x0D }, /* Advertise 100/10BASE-T H/Full */
++	{ 0x04, 0xE1 },
++	{ 0x00, 0x91 }, /* Apply software reset */
++	{ 0x00, 0x40 },
++};
++
++#define SFP_PHY_CONFIG_ITEM_NBR (sizeof(sfp_phy_config) / 2)
++
++static int scalys_carrier_init_rgmii_phy0(int enable)
++{
++	int ret;
++	u32 val;
++	struct ccsr_gpio *pgpio2 = (void *)(GPIO2_BASE_ADDR);
++
++	 /* Reset RGMII PHY 0 by setting ETH1_RESET_N_3V3 high */
++	val = in_be32(&pgpio2->gpdir) | ETH1_RESET_N_3V3_GPIO;
++	out_be32(&pgpio2->gpdir, val);
++
++	val = in_be32(&pgpio2->gpdat);
++	val &= ~ETH1_RESET_N_3V3_GPIO;
++	out_be32(&pgpio2->gpdat, val);
++
++	/* Wait for 10 ms to to meet reset timing */
++	mdelay(10);
++
++	if (enable) {
++		val = in_be32(&pgpio2->gpdat) | ETH1_RESET_N_3V3_GPIO;
++		out_be32(&pgpio2->gpdat, val);
++
++		/* Write 0x4111 to reg 0x18 on both PHYs to change LEDs usage */
++		ret = miiphy_write("FSL_MDIO0",0,0x18,0x4111);
++	}
++
++	return ret;
++}
++
++static int scalys_carrier_init_rgmii_phy1(int enable)
++{
++	int ret = 0;
++	uint8_t i2c_data;
++
++	/* Reset RGMII PHY 1 by setting ETH2_RESET_N_3V3 high */
++	i2c_set_bus_num(0);
++	/* Set to output */
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	i2c_data &= ~ETH2_RESET_N_3V3_GPIO;
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	/* Set to low */
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	i2c_data &= ~ETH2_RESET_N_3V3_GPIO;
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++
++	/* Wait for 10 ms to to meet reset timing */
++	mdelay(10);
++
++	if (enable) {
++		/* Set to high */
++		ret = i2c_read(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++		if (ret) {
++			return ret;
++		}
++		i2c_data |= ETH2_RESET_N_3V3_GPIO;
++		ret = i2c_write(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++		if (ret) {
++			return ret;
++		}
++
++		/* Write 0x4111 to reg 0x18 on both PHYs to change LEDs usage */
++		miiphy_write("FSL_MDIO0",1,0x18,0x4111);
++	}
++
++	return ret;
++}
++
++static int scalys_carrier_init_sfp_phys()
++{
++	int ret = 0;
++	uint8_t i2c_data;
++
++	/* Turn SFPx LEDs off by default */
++	/* It is up to the OS to control these if desired */
++	i2c_set_bus_num(0);
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	i2c_data &= ~(SGMII0_LINKSTAT_GPIO| \
++					SGMII0_ACT_GPIO| \
++					SGMII1_LINKSTAT_GPIO| \
++					SGMII1_ACT_GPIO);
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++	i2c_data &= ~(SGMII0_LINKSTAT_GPIO| \
++					SGMII0_ACT_GPIO| \
++					SGMII1_LINKSTAT_GPIO| \
++					SGMII1_ACT_GPIO);
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++
++	/* Remove SFP TX_disable */
++	/* Set to output */
++	ret = i2c_read(CAR_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	i2c_data &= ~TX_DISABLE_GPIO;
++	ret = i2c_write(CAR_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	/* Set to low */
++	ret = i2c_read(CAR_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	i2c_data &= ~TX_DISABLE_GPIO;
++	ret = i2c_write(CAR_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++
++	/* Wait until PHYs are ready */
++	mdelay(100);
++
++	i2c_set_bus_num(3);
++
++	/* If inserted, the SFP modules have to be configured. */
++	for (int phy_addr=2; phy_addr<4; phy_addr++) {
++		/* I2C multiplexer channel selection (SGMII/SFP is 2 (bottom left) & 3 (top left)) */
++		i2c_data = (1 << phy_addr);
++		ret = i2c_write(0x70, 0, 1, &i2c_data, 1);
++		if (ret) {
++			printf("Error Setting SFP i2c MUX\n");
++			break;
++		}
++
++		ret = i2c_probe(0x56);
++		if (ret) {
++			printf("Warning: No SFP PHY module detected on slot %i.\n", phy_addr);
++		} else {
++			for (int i = 0; i < SFP_PHY_CONFIG_ITEM_NBR; i++) {
++				ret = i2c_write(0x56, sfp_phy_config[i][0], 1, &(sfp_phy_config[i][1]), 1);
++				if (ret) {
++					printf("Error configuring SFP PHY on slot %i. (I2C Data: %d, Reg: %d).\n", phy_addr, sfp_phy_config[i][1], sfp_phy_config[i][0]);
++					break;
++				}
++			}
++		}
++	}
++
++	/* If SFP+ modules must be configured then add this below here */
++
++	return 0;
++}
++
++static int scalys_carrier_init_retimer(int enable)
++{
++	int ret;
++	uint8_t i2c_data;
++
++	/* Set EDC_RST_N_3V3 low to keep retimer in reset */
++	i2c_set_bus_num(0);
++	/* Set to output */
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x0D, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	i2c_data &= ~(EDC_RST_N_3V3_GPIO);
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x0D, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++
++	/* Set to low to enable PHY reset */
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x05, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++	i2c_data &= ~(EDC_RST_N_3V3_GPIO);
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x05, 1, &i2c_data, 1);
++	if (ret) {
++		return ret;
++	}
++
++	/* Wait until PHYs are ready */
++	mdelay(1);
++
++	if (enable) {
++		/* Set to high to disable PHY reset */
++		ret = i2c_read(MOD_I2C_IO_ADDR, 0x05, 1, &i2c_data, 1);
++		if (ret) {
++			return ret;
++		}
++		i2c_data |= (EDC_RST_N_3V3_GPIO);
++		ret = i2c_write(MOD_I2C_IO_ADDR, 0x05, 1, &i2c_data, 1);
++		if (ret) {
++			return ret;
++		}
++
++		mdelay(1);
++	}
++
++	return 0;
++}
++
++int board_eth_init(struct bd_info *bis)
++{
++#ifdef CONFIG_FMAN_ENET
++	int i;
++	struct memac_mdio_info dtsec_mdio_info;
++	struct mii_dev *dev;
++	u32 srds_s1;
++	struct ccsr_gur *gur = (void *)(CONFIG_SYS_FSL_GUTS_ADDR);
++
++	srds_s1 = in_be32(&gur->rcwsr[4]) &	FSL_CHASSIS2_RCWSR4_SRDS1_PRTCL_MASK;
++	srds_s1 >>= FSL_CHASSIS2_RCWSR4_SRDS1_PRTCL_SHIFT;
++
++	dtsec_mdio_info.regs = (struct memac_mdio_controller *)CONFIG_SYS_FM1_DTSEC_MDIO_ADDR;
++	dtsec_mdio_info.name = DEFAULT_FM_MDIO_NAME;
++
++	/* Register the MDIO 1 bus */
++	fm_memac_mdio_init(bis, &dtsec_mdio_info);
++
++	/* Reset PHY's and do some initial mdio configuration */
++	if(scalys_carrier_init_rgmii_phy0(true) != 0)
++		printf("Initializing RGMII PHY 0 failed\n");
++	if(scalys_carrier_init_rgmii_phy1(true) != 0)
++		printf("Initializing RGMII PHY 1 failed\n");
++	if(scalys_carrier_init_sfp_phys() != 0)
++		printf("Initializing SFP PHYs failed\n");
++
++	/* Wait until PHYs are ready */
++	mdelay(100);
++
++	/* Set the two RGMII PHY addresses */
++	fm_info_set_phy_address(FM1_DTSEC3, RGMII_PHY1_ADDR);
++	fm_info_set_phy_address(FM1_DTSEC4, RGMII_PHY2_ADDR);
++
++	/* The SGMII PHYs have no MDIO interface and have already been configured
++	 * above through I2C */
++	/* Disable unused DTSEC ports */
++	fm_disable_port(FM1_DTSEC1);
++	fm_disable_port(FM1_DTSEC2);
++	fm_disable_port(FM1_DTSEC9);
++	fm_disable_port(FM1_DTSEC10);
++
++	dev = miiphy_get_dev_by_name(DEFAULT_FM_MDIO_NAME);
++	for (i = FM1_DTSEC1; i < FM1_DTSEC1 + CONFIG_SYS_NUM_FM1_DTSEC; i++) {
++		/* Skip SGMII interfaces since their PHYs are not connected to the MDIO bus */
++		if (fm_info_get_enet_if(i) == PHY_INTERFACE_MODE_SGMII) {
++			continue;
++		}
++		fm_info_set_mdio(i, dev);
++	}
++
++	/* Only support XFI interfaces if correct SERDES1 configuration is present */
++	/* Note: due to design limitation the MDIO 1 bus will be used for the CS4315 retimer PHYs as well.
++	 * This retimer expects clause 45 formatted data but the RGMII PHYs expect clause 22.
++	 * The RGMII PHYs can become confused by the clause 45 data and may incorrectly respond
++	 * under certain circumstances. For now the retimer PHYs have higher addresses to hopefully
++	 * bypass this but this may still result in undesired behaviour */
++	if (srds_s1 == 0x1133) {
++		/* First remove reset */
++		if(scalys_carrier_init_retimer(true) != 0) {
++			printf("Enabling XFI retimer failed\n");
++		}
++
++		/* Set the two XFI PHY addresses and associate them with the MDIO bus */
++		fm_info_set_phy_address(FM1_10GEC1, CORTINA_PHY_ADDR1);
++		fm_info_set_phy_address(FM1_10GEC2, CORTINA_PHY_ADDR2);
++		dev = miiphy_get_dev_by_name(DEFAULT_FM_MDIO_NAME);
++		fm_info_set_mdio(FM1_10GEC1, dev);
++		fm_info_set_mdio(FM1_10GEC2, dev);
++	} else {
++		/* Disable the retimer by keeping it in reset */
++		if(scalys_carrier_init_retimer(false) != 0) {
++			printf("Disabling XFI retimer failed\n");
++		}
++		fm_disable_port(FM1_10GEC1);
++		fm_disable_port(FM1_10GEC2);
++	}
++
++	cpu_eth_init(bis);
++#endif
++
++	return pci_eth_init(bis);
++}
+diff --git a/board/scalys/qls1046a_4gb/qls1046a_4gb.c b/board/scalys/qls1046a_4gb/qls1046a_4gb.c
+new file mode 100644
+index 0000000000..9b85078f30
+--- /dev/null
++++ b/board/scalys/qls1046a_4gb/qls1046a_4gb.c
+@@ -0,0 +1,260 @@
++/*
++ * Copyright 2019 Teledyne e2v
++ * Copyright 2020 Scalys
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#include <common.h>
++#include <i2c.h>
++#include <fdt_support.h>
++#include <asm/io.h>
++#include <asm/arch/clock.h>
++#include <asm/arch/fsl_serdes.h>
++#include <asm/arch/ppa.h>
++#include <asm/arch/soc.h>
++#include <asm/arch-fsl-layerscape/fsl_icid.h>
++#include <hwconfig.h>
++#include <ahci.h>
++#include <mmc.h>
++#include <scsi.h>
++#include <fm_eth.h>
++#include <fsl_csu.h>
++#include <fsl_esdhc.h>
++#include <fsl_sec.h>
++#include <fsl_ifc.h>
++
++#include "dragonfruit.h"
++#include <board_configuration_data.h>
++
++DECLARE_GLOBAL_DATA_PTR;
++
++struct ifc_regs ifc_cfg_norcs0_nandcs1[CONFIG_SYS_FSL_IFC_BANK_COUNT] = {
++	{
++		"nor0",
++		CONFIG_SYS_NOR_CSPR,
++		CONFIG_SYS_NOR_CSPR_EXT,
++		CONFIG_SYS_NOR_AMASK,
++		CONFIG_SYS_NOR_CSOR,
++		{
++			CONFIG_SYS_NOR_FTIM0,
++			CONFIG_SYS_NOR_FTIM1,
++			CONFIG_SYS_NOR_FTIM2,
++			CONFIG_SYS_NOR_FTIM3
++		},
++
++	},
++	{
++		"nand",
++		CONFIG_SYS_NAND_CSPR,
++		CONFIG_SYS_NAND_CSPR_EXT,
++		CONFIG_SYS_NAND_AMASK,
++		CONFIG_SYS_NAND_CSOR,
++		{
++			CONFIG_SYS_NAND_FTIM0,
++			CONFIG_SYS_NAND_FTIM1,
++			CONFIG_SYS_NAND_FTIM2,
++			CONFIG_SYS_NAND_FTIM3
++		},
++	}
++};
++
++struct ifc_regs ifc_cfg_nandcs0_norcs1[CONFIG_SYS_FSL_IFC_BANK_COUNT] = {
++	{
++		"nand",
++		CONFIG_SYS_NAND_CSPR,
++		CONFIG_SYS_NAND_CSPR_EXT,
++		CONFIG_SYS_NAND_AMASK,
++		CONFIG_SYS_NAND_CSOR,
++		{
++			CONFIG_SYS_NAND_FTIM0,
++			CONFIG_SYS_NAND_FTIM1,
++			CONFIG_SYS_NAND_FTIM2,
++			CONFIG_SYS_NAND_FTIM3
++		},
++	},
++	{
++		"nor0",
++		CONFIG_SYS_NOR_CSPR,
++		CONFIG_SYS_NOR_CSPR_EXT,
++		CONFIG_SYS_NOR_AMASK,
++		CONFIG_SYS_NOR_CSOR,
++		{
++			CONFIG_SYS_NOR_FTIM0,
++			CONFIG_SYS_NOR_FTIM1,
++			CONFIG_SYS_NOR_FTIM2,
++			CONFIG_SYS_NOR_FTIM3
++		},
++	}
++};
++
++void ifc_cfg_boot_info(struct ifc_regs_info *regs_info)
++{
++#if defined(CONFIG_NAND_BOOT)
++	regs_info->regs = ifc_cfg_nandcs0_norcs1;
++#elif defined(CONFIG_NOR_BOOT) || defined(CONFIG_SD_BOOT)
++	regs_info->regs = ifc_cfg_norcs0_nandcs1;
++#else
++#error "Unkown or unsupported boot source"
++#endif
++	regs_info->cs_size = CONFIG_SYS_FSL_IFC_BANK_COUNT;
++
++#if defined(DEBUG) || 1
++	print_ifc_regs();
++#endif
++}
++
++int board_early_init_f(void)
++{
++	fsl_lsch2_early_init_f();
++
++	return 0;
++}
++
++int board_mmc_getcd(struct mmc *mmc)
++{
++    return CONFIG_ESDHC_DETECT_QUIRK;
++}
++
++#ifndef CONFIG_SPL_BUILD
++
++int checkboard(void)
++{
++	puts("Board: Teledyne QLS1046A 4GB (DDR4) on Scalys daughter board.\nBoot from: ");
++
++#ifdef CONFIG_SD_BOOT
++	puts("SD\n");
++#elif defined(CONFIG_NOR_BOOT)
++	puts("NOR (IFC)\n");
++#elif defined(CONFIG_NAND_BOOT)
++	puts("NAND (IFC)\n");
++#else
++	puts("Unknown/unsupported source.\n");
++#endif
++	return 0;
++}
++
++int board_init(void)
++{
++	scalys_carrier_setup_muxing();
++    
++#ifdef CONFIG_PCI
++	scalys_carrier_init_pcie();
++#endif
++	
++#ifdef CONFIG_SECURE_BOOT
++#error SECURE_BOOT not supported
++#endif
++
++#ifdef CONFIG_FSL_CAAM
++	sec_init();
++#endif
++
++#ifdef CONFIG_FSL_LS_PPA
++	ppa_init();
++#endif
++
++	return 0;
++}
++
++#ifdef CONFIG_MISC_INIT_R
++int misc_init_r(void)
++{
++	int ret;
++	struct ccsr_scfg *scfg = (struct ccsr_scfg *)CONFIG_SYS_FSL_SCFG_ADDR;
++	u32 usb_pwrfault;
++	uint8_t i2c_data;
++	const void* bcd_dtc_blob;
++
++	/* configure mux to IIC3_SCL/IIC3_SDA and IIC4_SCL/IIC4_SDA */
++	out_be32(&scfg->rcwpmuxcr0, 0x0000);
++
++	/* USB1 ctrl drives USB_DRVVBUS I/O */
++	out_be32(&scfg->usbdrvvbus_selcr, SCFG_USBDRVVBUS_SELCR_USB1);
++
++	/* USB1 & USB2 share the same USB_PWRFAULT/GPIO4_30 input pin */
++	usb_pwrfault = (SCFG_USBPWRFAULT_INACTIVE <<
++			SCFG_USBPWRFAULT_USB3_SHIFT) |
++			(SCFG_USBPWRFAULT_SHARED <<
++			SCFG_USBPWRFAULT_USB2_SHIFT) |
++			(SCFG_USBPWRFAULT_SHARED <<
++			SCFG_USBPWRFAULT_USB1_SHIFT);
++	out_be32(&scfg->usbpwrfault_selcr, usb_pwrfault);
++
++	/* 
++	 * Initialize and set the LED's on the module to indicate u-boot is alive
++	 * DEBUG_LED_GREEN : pin 6 of port 2 of i2c io expander
++	 * DEBUG_LED_RED : pin 7 of port 2 of i2c io expander
++	 */
++	#define DEBUG_LED_GREEN		0x40
++	#define DEBUG_LED_RED		0x80
++	/* Set green led on and red led off */
++	i2c_set_bus_num(0);
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	i2c_data &= ~(DEBUG_LED_GREEN | DEBUG_LED_RED);
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x0E, 1, &i2c_data, 1);
++	ret = i2c_read(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++	i2c_data |= DEBUG_LED_GREEN;
++	i2c_data &= ~DEBUG_LED_RED;
++	ret = i2c_write(MOD_I2C_IO_ADDR, 0x06, 1, &i2c_data, 1);
++
++	/* Read BCD data from I2C eeprom */
++	bcd_dtc_blob = get_boardinfo_eeprom();
++	if (bcd_dtc_blob != NULL) {
++		/* Board Configuration Data is intact, ready for parsing */
++		ret = add_mac_addressess_to_env(bcd_dtc_blob);
++		if (ret != 0) {
++			printf("Error adding BCD data to environement\n");
++		}
++	}
++
++	return 0;
++}
++#endif
++
++int ft_board_setup(void *blob, struct bd_info *bd)
++{
++#ifdef CONFIG_NR_DRAM_BANKS
++	u64 base[CONFIG_NR_DRAM_BANKS];
++	u64 size[CONFIG_NR_DRAM_BANKS];
++
++	/* fixup DT for the two DDR banks */
++	base[0] = gd->bd->bi_dram[0].start;
++	size[0] = gd->bd->bi_dram[0].size;
++	base[1] = gd->bd->bi_dram[1].start;
++	size[1] = gd->bd->bi_dram[1].size;
++
++	fdt_fixup_memory_banks(blob, base, size, 2);
++	ft_cpu_setup(blob, bd);
++#endif
++
++#ifdef CONFIG_SYS_DPAA_FMAN
++	fdt_fixup_fman_ethernet(blob);
++#endif
++
++	fdt_fixup_icid(blob);
++
++	return 0;
++}
++
++#endif /* !CONFIG_SPL_BUILD */
++
++u8 flash_read8(void *addr)
++{
++	return __raw_readb(addr + 1);
++}
++
++void flash_write16(u16 val, void *addr)
++{
++	u16 shftval = (((val >> 8) & 0xff) | ((val << 8) & 0xff00));
++
++	__raw_writew(shftval, addr);
++}
++
++u16 flash_read16(void *addr)
++{
++	u16 val = __raw_readw(addr);
++
++	return (((val) >> 8) & 0x00ff) | (((val) << 8) & 0xff00);
++}
++
+diff --git a/configs/qls1046a_4gb_ifc_nor_defconfig b/configs/qls1046a_4gb_ifc_nor_defconfig
+new file mode 100644
+index 0000000000..9a1b65d947
+--- /dev/null
++++ b/configs/qls1046a_4gb_ifc_nor_defconfig
+@@ -0,0 +1,81 @@
++CONFIG_ARM=y
++CONFIG_TARGET_QLS1046A_4GB=y
++CONFIG_TFABOOT=y
++CONFIG_SYS_TEXT_BASE=0x82000000
++CONFIG_SYS_MALLOC_LEN=0x102000
++CONFIG_NR_DRAM_BANKS=2
++CONFIG_ENV_SIZE=0x2000
++CONFIG_ENV_SECT_SIZE=0x40000
++CONFIG_DEFAULT_DEVICE_TREE="qls1046a_4gb"
++CONFIG_QSPI_AHB_INIT=y
++CONFIG_ARMV8_SEC_FIRMWARE_SUPPORT=y
++CONFIG_SEC_FIRMWARE_ARMV8_PSCI=y
++CONFIG_AHCI=y
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_REMAKE_ELF=y
++CONFIG_MP=y
++CONFIG_FIT_VERBOSE=y
++CONFIG_OF_BOARD_SETUP=y
++CONFIG_NOR_BOOT=y
++CONFIG_BOOTDELAY=3
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 root=/dev/ram0 earlycon=uart8250,mmio,0x21c0500"
++CONFIG_ARCH_MISC_INIT=y
++CONFIG_MISC_INIT_R=y
++# CONFIG_ID_EEPROM is not set
++CONFIG_CMD_BOOTZ=y
++# CONFIG_BOOTM_PLAN9 is not set
++# CONFIG_BOOTM_RTEMS is not set
++# CONFIG_BOOTM_VXWORKS is not set
++CONFIG_CMD_IMLS=y
++CONFIG_CMD_GREPENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS=5
++CONFIG_CMD_MEMINFO=y
++CONFIG_CMD_MEMTEST=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_NAND=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_CACHE=y
++CONFIG_MTDIDS_DEFAULT="nand0=7e800000.flash,nor0=60000000.nor"
++CONFIG_OF_CONTROL=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_ENV_IS_IN_FLASH=y
++CONFIG_ENV_ADDR=0x300000
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_DM=y
++CONFIG_FSL_CAAM=y
++# CONFIG_DDR_SPD is not set
++CONFIG_SYS_I2C_LEGACY=y
++CONFIG_FSL_ESDHC=y
++CONFIG_MTD=y
++CONFIG_MTD_NOR_FLASH=y
++CONFIG_FLASH_CFI_DRIVER=y
++CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_SYS_FLASH_CFI=y
++CONFIG_MTD_RAW_NAND=y
++CONFIG_NAND_FSL_IFC=y
++CONFIG_SYS_NAND_ONFI_DETECTION=y
++CONFIG_SF_DEFAULT_BUS=1
++CONFIG_SF_DEFAULT_MODE=0x3
++CONFIG_MTD_UBI=y
++CONFIG_PHYLIB=y
++CONFIG_PHY_GIGE=y
++CONFIG_E1000=y
++CONFIG_FMAN_ENET=y
++CONFIG_SYS_FMAN_FW_ADDR=0x900000
++CONFIG_PCI=y
++CONFIG_DM_PCI_COMPAT=y
++CONFIG_PCIE_LAYERSCAPE_RC=y
++CONFIG_PCIE_LAYERSCAPE_EP=y
++CONFIG_DM_SCSI=y
++CONFIG_SYS_NS16550=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_FSL_DSPI=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_DWC3=y
+diff --git a/configs/qls1046a_4gb_ifc_nor_xfi_defconfig b/configs/qls1046a_4gb_ifc_nor_xfi_defconfig
+new file mode 100644
+index 0000000000..bf8821c5de
+--- /dev/null
++++ b/configs/qls1046a_4gb_ifc_nor_xfi_defconfig
+@@ -0,0 +1,84 @@
++CONFIG_ARM=y
++CONFIG_TARGET_QLS1046A_4GB=y
++CONFIG_TFABOOT=y
++CONFIG_SYS_TEXT_BASE=0x82000000
++CONFIG_SYS_MALLOC_LEN=0x102000
++CONFIG_NR_DRAM_BANKS=2
++CONFIG_ENV_SIZE=0x2000
++CONFIG_ENV_SECT_SIZE=0x40000
++CONFIG_DEFAULT_DEVICE_TREE="qls1046a_4gb"
++CONFIG_QSPI_AHB_INIT=y
++CONFIG_ARMV8_SEC_FIRMWARE_SUPPORT=y
++CONFIG_SEC_FIRMWARE_ARMV8_PSCI=y
++CONFIG_AHCI=y
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_REMAKE_ELF=y
++CONFIG_MP=y
++CONFIG_FIT_VERBOSE=y
++CONFIG_OF_BOARD_SETUP=y
++CONFIG_NOR_BOOT=y
++CONFIG_BOOTDELAY=3
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 root=/dev/ram0 earlycon=uart8250,mmio,0x21c0500"
++CONFIG_ARCH_MISC_INIT=y
++CONFIG_MISC_INIT_R=y
++# CONFIG_ID_EEPROM is not set
++CONFIG_CMD_BOOTZ=y
++# CONFIG_BOOTM_PLAN9 is not set
++# CONFIG_BOOTM_RTEMS is not set
++# CONFIG_BOOTM_VXWORKS is not set
++CONFIG_CMD_IMLS=y
++CONFIG_CMD_GREPENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS=5
++CONFIG_CMD_MEMINFO=y
++CONFIG_CMD_MEMTEST=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_NAND=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_CACHE=y
++CONFIG_MTDIDS_DEFAULT="nand0=7e800000.flash,nor0=60000000.nor"
++CONFIG_OF_CONTROL=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_ENV_IS_IN_FLASH=y
++CONFIG_ENV_ADDR=0x300000
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_DM=y
++CONFIG_FSL_CAAM=y
++# CONFIG_DDR_SPD is not set
++CONFIG_SYS_I2C_LEGACY=y
++CONFIG_FSL_ESDHC=y
++CONFIG_MTD=y
++CONFIG_MTD_NOR_FLASH=y
++CONFIG_FLASH_CFI_DRIVER=y
++CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_SYS_FLASH_CFI=y
++CONFIG_MTD_RAW_NAND=y
++CONFIG_NAND_FSL_IFC=y
++CONFIG_SYS_NAND_ONFI_DETECTION=y
++CONFIG_SF_DEFAULT_BUS=1
++CONFIG_SF_DEFAULT_MODE=0x3
++CONFIG_MTD_UBI=y
++CONFIG_PHYLIB=y
++CONFIG_PHYLIB_10G=y
++CONFIG_PHY_CORTINA=y
++CONFIG_CORTINA_FW_ADDR=0x60380000
++CONFIG_PHY_GIGE=y
++CONFIG_E1000=y
++CONFIG_FMAN_ENET=y
++CONFIG_SYS_FMAN_FW_ADDR=0x900000
++CONFIG_PCI=y
++CONFIG_DM_PCI_COMPAT=y
++CONFIG_PCIE_LAYERSCAPE_RC=y
++CONFIG_PCIE_LAYERSCAPE_EP=y
++CONFIG_DM_SCSI=y
++CONFIG_SYS_NS16550=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_FSL_DSPI=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_DWC3=y
+diff --git a/configs/qls1046a_4gb_sdcard_defconfig b/configs/qls1046a_4gb_sdcard_defconfig
+new file mode 100644
+index 0000000000..1d8af0cacb
+--- /dev/null
++++ b/configs/qls1046a_4gb_sdcard_defconfig
+@@ -0,0 +1,81 @@
++CONFIG_ARM=y
++CONFIG_TARGET_QLS1046A_4GB=y
++CONFIG_TFABOOT=y
++CONFIG_SYS_TEXT_BASE=0x82000000
++CONFIG_SYS_MALLOC_LEN=0x102000
++CONFIG_NR_DRAM_BANKS=2
++CONFIG_ENV_SIZE=0x2000
++CONFIG_ENV_OFFSET=0x500000
++CONFIG_DEFAULT_DEVICE_TREE="qls1046a_4gb"
++CONFIG_QSPI_AHB_INIT=y
++CONFIG_ARMV8_SEC_FIRMWARE_SUPPORT=y
++CONFIG_SEC_FIRMWARE_ARMV8_PSCI=y
++CONFIG_AHCI=y
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_REMAKE_ELF=y
++CONFIG_MP=y
++CONFIG_FIT_VERBOSE=y
++CONFIG_OF_BOARD_SETUP=y
++CONFIG_SD_BOOT=y
++CONFIG_BOOTDELAY=3
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 root=/dev/ram0 earlycon=uart8250,mmio,0x21c0500"
++CONFIG_ARCH_MISC_INIT=y
++CONFIG_MISC_INIT_R=y
++# CONFIG_ID_EEPROM is not set
++CONFIG_CMD_BOOTZ=y
++# CONFIG_BOOTM_PLAN9 is not set
++# CONFIG_BOOTM_RTEMS is not set
++# CONFIG_BOOTM_VXWORKS is not set
++CONFIG_CMD_IMLS=y
++CONFIG_CMD_GREPENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS=5
++CONFIG_CMD_MEMINFO=y
++CONFIG_CMD_MEMTEST=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_NAND=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_CACHE=y
++CONFIG_MTDIDS_DEFAULT="nand0=7e800000.flash,nor0=60000000.nor"
++CONFIG_OF_CONTROL=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_ENV_IS_IN_MMC=y
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_DM=y
++CONFIG_FSL_CAAM=y
++# CONFIG_DDR_SPD is not set
++CONFIG_SYS_I2C_LEGACY=y
++CONFIG_FSL_ESDHC=y
++CONFIG_MTD=y
++CONFIG_MTD_NOR_FLASH=y
++CONFIG_FLASH_CFI_DRIVER=y
++CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_SYS_FLASH_CFI=y
++CONFIG_MTD_RAW_NAND=y
++CONFIG_NAND_FSL_IFC=y
++CONFIG_SYS_NAND_ONFI_DETECTION=y
++CONFIG_SF_DEFAULT_BUS=1
++CONFIG_SF_DEFAULT_MODE=0x3
++# CONFIG_SPI_FLASH_BAR is not set
++CONFIG_MTD_UBI=y
++CONFIG_PHYLIB=y
++CONFIG_PHY_GIGE=y
++CONFIG_E1000=y
++CONFIG_FMAN_ENET=y
++CONFIG_SYS_FMAN_FW_ADDR=0x900000
++CONFIG_PCI=y
++CONFIG_DM_PCI_COMPAT=y
++CONFIG_PCIE_LAYERSCAPE_RC=y
++CONFIG_PCIE_LAYERSCAPE_EP=y
++CONFIG_DM_SCSI=y
++CONFIG_SYS_NS16550=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_FSL_DSPI=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_DWC3=y
+diff --git a/configs/qls1046a_4gb_sdcard_xfi_defconfig b/configs/qls1046a_4gb_sdcard_xfi_defconfig
+new file mode 100644
+index 0000000000..41445aa770
+--- /dev/null
++++ b/configs/qls1046a_4gb_sdcard_xfi_defconfig
+@@ -0,0 +1,83 @@
++CONFIG_ARM=y
++CONFIG_TARGET_QLS1046A_4GB=y
++CONFIG_TFABOOT=y
++CONFIG_SYS_TEXT_BASE=0x82000000
++CONFIG_SYS_MALLOC_LEN=0x102000
++CONFIG_NR_DRAM_BANKS=2
++CONFIG_ENV_SIZE=0x2000
++CONFIG_ENV_OFFSET=0x500000
++CONFIG_DEFAULT_DEVICE_TREE="qls1046a_4gb"
++CONFIG_QSPI_AHB_INIT=y
++CONFIG_ARMV8_SEC_FIRMWARE_SUPPORT=y
++CONFIG_SEC_FIRMWARE_ARMV8_PSCI=y
++CONFIG_AHCI=y
++CONFIG_DISTRO_DEFAULTS=y
++CONFIG_REMAKE_ELF=y
++CONFIG_MP=y
++CONFIG_FIT_VERBOSE=y
++CONFIG_OF_BOARD_SETUP=y
++CONFIG_SD_BOOT=y
++CONFIG_BOOTDELAY=3
++CONFIG_USE_BOOTARGS=y
++CONFIG_BOOTARGS="console=ttyS0,115200 root=/dev/ram0 earlycon=uart8250,mmio,0x21c0500"
++CONFIG_ARCH_MISC_INIT=y
++CONFIG_MISC_INIT_R=y
++# CONFIG_ID_EEPROM is not set
++CONFIG_CMD_BOOTZ=y
++# CONFIG_BOOTM_PLAN9 is not set
++# CONFIG_BOOTM_RTEMS is not set
++# CONFIG_BOOTM_VXWORKS is not set
++CONFIG_CMD_IMLS=y
++CONFIG_CMD_GREPENV=y
++CONFIG_CMD_ERASEENV=y
++CONFIG_SYS_EEPROM_PAGE_WRITE_DELAY_MS=5
++CONFIG_CMD_MEMINFO=y
++CONFIG_CMD_MEMTEST=y
++CONFIG_CMD_GPT=y
++CONFIG_CMD_I2C=y
++CONFIG_CMD_MMC=y
++CONFIG_CMD_NAND=y
++CONFIG_CMD_PCI=y
++CONFIG_CMD_USB=y
++CONFIG_CMD_CACHE=y
++CONFIG_MTDIDS_DEFAULT="nand0=7e800000.flash,nor0=60000000.nor"
++CONFIG_OF_CONTROL=y
++CONFIG_ENV_OVERWRITE=y
++CONFIG_ENV_IS_IN_MMC=y
++CONFIG_SYS_RELOC_GD_ENV_ADDR=y
++CONFIG_DM=y
++CONFIG_FSL_CAAM=y
++# CONFIG_DDR_SPD is not set
++CONFIG_SYS_I2C_LEGACY=y
++CONFIG_FSL_ESDHC=y
++CONFIG_MTD=y
++CONFIG_MTD_NOR_FLASH=y
++CONFIG_FLASH_CFI_DRIVER=y
++CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_SYS_FLASH_CFI=y
++CONFIG_MTD_RAW_NAND=y
++CONFIG_NAND_FSL_IFC=y
++CONFIG_SYS_NAND_ONFI_DETECTION=y
++CONFIG_SF_DEFAULT_BUS=1
++CONFIG_SF_DEFAULT_MODE=0x3
++CONFIG_MTD_UBI=y
++CONFIG_PHYLIB=y
++CONFIG_PHYLIB_10G=y
++CONFIG_PHY_CORTINA=y
++CONFIG_CORTINA_FW_ADDR=0x60380000
++CONFIG_PHY_GIGE=y
++CONFIG_E1000=y
++CONFIG_FMAN_ENET=y
++CONFIG_SYS_FMAN_FW_ADDR=0x900000
++CONFIG_PCI=y
++CONFIG_DM_PCI_COMPAT=y
++CONFIG_PCIE_LAYERSCAPE_RC=y
++CONFIG_PCIE_LAYERSCAPE_EP=y
++CONFIG_DM_SCSI=y
++CONFIG_SYS_NS16550=y
++CONFIG_SPI=y
++CONFIG_DM_SPI=y
++CONFIG_FSL_DSPI=y
++CONFIG_USB=y
++CONFIG_USB_XHCI_HCD=y
++CONFIG_USB_XHCI_DWC3=y
+diff --git a/include/configs/qls1046a_4gb.h b/include/configs/qls1046a_4gb.h
+new file mode 100644
+index 0000000000..a28eaaea3d
+--- /dev/null
++++ b/include/configs/qls1046a_4gb.h
+@@ -0,0 +1,439 @@
++/*
++ * Copyright 2019 Teledyne e2v
++ * Copyright 2020 Scalys
++ *
++ * SPDX-License-Identifier:	GPL-2.0+
++ */
++
++#ifndef __QLS1046A_4GB_H__
++#define __QLS1046A_4GB_H__
++
++#include "ls1046a_common.h"
++
++#define CONFIG_SYS_CLK_FREQ		100000000
++#define CONFIG_DDR_CLK_FREQ		100000000
++
++#define CONFIG_LAYERSCAPE_NS_ACCESS
++
++#ifndef CONFIG_MISC_INIT_R
++#define CONFIG_MISC_INIT_R
++#endif
++
++#ifndef CONFIG_SPL_BOARD_INIT
++#define CONFIG_SPL_BOARD_INIT
++#endif
++
++/* Card detect pin is not connected properly so read out gpio4_3 instead */
++#define CONFIG_ESDHC_DETECT_QUIRK \
++	((in_be32(GPIO4_BASE_ADDR + 0x8) & 0x10000000) ? 0 : 1)
++
++#define CONFIG_DIMM_SLOTS_PER_CTLR	1
++/* Physical Memory Map */
++#define CONFIG_CHIP_SELECTS_PER_CTRL	4
++
++#ifdef CONFIG_DDR_SPD
++#undef CONFIG_DDR_SPD
++#endif
++
++#define CONFIG_SYS_DDR_RAW_TIMING
++#define CONFIG_DDR_ECC
++#define CONFIG_ECC_INIT_VIA_DDRCONTROLLER
++#define CONFIG_MEM_INIT_VALUE           0xdeadbeef
++
++/* Size of malloc() pool */
++#ifdef CONFIG_SYS_MALLOC_LEN
++#undef CONFIG_SYS_MALLOC_LEN
++#endif
++#define CONFIG_SYS_MALLOC_LEN		(CONFIG_ENV_SIZE + 32 * 1024 * 1024)
++
++/* NAND Flash on IFC CS0 */
++#define CONFIG_SYS_NAND_BASE		0x7e800000
++#define CONFIG_SYS_NAND_BASE_PHYS	CONFIG_SYS_NAND_BASE
++
++#define CONFIG_SYS_NAND_CSPR_EXT        (0x0)
++#define CONFIG_SYS_NAND_CSPR            (CSPR_PHYS_ADDR(CONFIG_SYS_NAND_BASE_PHYS) \
++                                        | CSPR_PORT_SIZE_8 /* Port Size = 8 bit */ \
++                                        | CSPR_MSEL_NAND    /* MSEL = NAND */ \
++                                        | CSPR_V)
++
++#define CONFIG_SYS_NAND_AMASK           IFC_AMASK(64*1024)
++
++#define CONFIG_SYS_NAND_CSOR		(CSOR_NAND_ECC_ENC_EN |	/* ECC on encode */ \
++					 CSOR_NAND_ECC_DEC_EN |	/* ECC on decode */ \
++					 CSOR_NAND_ECC_MODE_4 |	/* 4-bit ECC */ \
++					 CSOR_NAND_RAL_3 |	/* RAL = 3Byes */ \
++					 CSOR_NAND_PGS_2K |	/* Page Size = 2K */ \
++					 CSOR_NAND_SPRZ_128 |	/* Spare size = 128 */ \
++					 CSOR_NAND_PB(64) |	/* Pages Per Block = 64 */ \
++					 CSOR_NAND_BCTLD)	/* Buffer control disable */
++
++#define CONFIG_SYS_NAND_FTIM0           (FTIM0_NAND_TCCST(0x07) | \
++                                        FTIM0_NAND_TWP(0x18)   | \
++                                        FTIM0_NAND_TWCHT(0x07) | \
++                                        FTIM0_NAND_TWH(0x0a))
++#define CONFIG_SYS_NAND_FTIM1           (FTIM1_NAND_TADLE(0x32) | \
++                                        FTIM1_NAND_TWBE(0x39)  | \
++                                        FTIM1_NAND_TRR(0x0e)   | \
++                                        FTIM1_NAND_TRP(0x18))
++#define CONFIG_SYS_NAND_FTIM2           (FTIM2_NAND_TRAD(0x0f) | \
++                                        FTIM2_NAND_TREH(0x0a) | \
++                                        FTIM2_NAND_TWHRE(0x1e))
++#define CONFIG_SYS_NAND_FTIM3           FTIM3_NAND_TWW(0xa)
++
++#define CONFIG_SYS_NAND_BASE_LIST       { CONFIG_SYS_NAND_BASE }
++#define CONFIG_SYS_MAX_NAND_DEVICE      1
++#define CONFIG_MTD_NAND_VERIFY_WRITE
++
++#define CONFIG_SYS_NAND_BLOCK_SIZE	(128 * 1024)
++
++/* NOR Flash on IFC CS1 */
++#define CONFIG_SYS_FLASH_CFI_WIDTH	FLASH_CFI_16BIT
++#define CONFIG_SYS_FLASH_PROTECTION
++
++#define CONFIG_SYS_FLASH_BASE			0x60000000
++#define CONFIG_SYS_FLASH_BASE_PHYS		CONFIG_SYS_FLASH_BASE
++
++#define CONFIG_SYS_MAX_FLASH_BANKS	1
++#define CONFIG_SYS_MAX_FLASH_SECT	259
++
++#define CONFIG_SYS_FLASH_EMPTY_INFO
++
++#define CONFIG_SYS_NOR_CSPR_EXT		(0x0)
++#define CONFIG_SYS_NOR_CSPR            (CSPR_PHYS_ADDR(CONFIG_SYS_FLASH_BASE_PHYS) | \
++					CSPR_PORT_SIZE_16 | \
++					CSPR_MSEL_NOR | \
++					CSPR_V)
++
++#define CONFIG_SYS_NOR_AMASK		IFC_AMASK(32*1024*1024)
++
++#define CONFIG_SYS_NOR_CSOR \
++    (CSOR_NOR_AVD_TGL_PGM_EN | /* AVD Toggle Enable during Burst Program */ \
++     CSOR_NOR_ADM_SHIFT(7) | /* Address Data Multiplexing Shift */ \
++     CSOR_NOR_TRHZ_80) | /* Time for Read Enable High to Output High Impedance */ \
++     CSOR_NAND_BCTLD /* Buffer control disable */
++
++#define CONFIG_SYS_NOR_FTIM0	(FTIM0_NOR_TACSE(0x4) | \
++				FTIM0_NOR_TEADC(0x5) | \
++				FTIM0_NOR_TEAHC(0x5))
++#define CONFIG_SYS_NOR_FTIM1	(FTIM1_NOR_TACO(0x35) | \
++				FTIM1_NOR_TRAD_NOR(0x1A) |\
++				FTIM1_NOR_TSEQRAD_NOR(0x13))
++#define CONFIG_SYS_NOR_FTIM2	(FTIM2_NOR_TCS(0x4) | \
++				FTIM2_NOR_TCH(0x4) | \
++				FTIM2_NOR_TWPH(0x0E) | \
++				FTIM2_NOR_TWP(0x1c))
++#define CONFIG_SYS_NOR_FTIM3	0x0
++
++#define CONFIG_CFI_FLASH_USE_WEAK_ACCESSORS
++
++/* IFC Timing Params (CONFIG_NAND_BOOT not supported!) */
++#if defined(CONFIG_NOR_BOOT) || defined (CONFIG_SD_BOOT)
++/* CS0 */
++#define CONFIG_SYS_CSPR0_EXT		CONFIG_SYS_NOR_CSPR_EXT
++#define CONFIG_SYS_CSPR0		CONFIG_SYS_NOR_CSPR
++#define CONFIG_SYS_AMASK0		CONFIG_SYS_NOR_AMASK
++#define CONFIG_SYS_CSOR0		CONFIG_SYS_NOR_CSOR
++#define CONFIG_SYS_CS0_FTIM0		CONFIG_SYS_NOR_FTIM0
++#define CONFIG_SYS_CS0_FTIM1		CONFIG_SYS_NOR_FTIM1
++#define CONFIG_SYS_CS0_FTIM2		CONFIG_SYS_NOR_FTIM2
++#define CONFIG_SYS_CS0_FTIM3		CONFIG_SYS_NOR_FTIM3
++/* CS1 */
++#define CONFIG_SYS_CSPR1_EXT		CONFIG_SYS_NAND_CSPR_EXT
++#define CONFIG_SYS_CSPR1		CONFIG_SYS_NAND_CSPR
++#define CONFIG_SYS_AMASK1		CONFIG_SYS_NAND_AMASK
++#define CONFIG_SYS_CSOR1		CONFIG_SYS_NAND_CSOR
++#define CONFIG_SYS_CS1_FTIM0		CONFIG_SYS_NAND_FTIM0
++#define CONFIG_SYS_CS1_FTIM1		CONFIG_SYS_NAND_FTIM1
++#define CONFIG_SYS_CS1_FTIM2		CONFIG_SYS_NAND_FTIM2
++#define CONFIG_SYS_CS1_FTIM3		CONFIG_SYS_NAND_FTIM3
++#endif /* CONFIG_NOR_BOOT */
++
++/* FMan */
++#ifndef SPL_NO_FMAN
++
++#ifdef CONFIG_NET
++#define CONFIG_PHY_MARVELL
++#ifdef CONFIG_SYS_DPAA_FMAN
++//#define CONFIG_FMAN_ENET
++
++#define CONFIG_MII          /* MII PHY management */
++#define CONFIG_ETHPRIME     "FM1@DTSEC3"
++/* Change RGMII_TXID to RGMII mode in drivers/net/fm/ls1046.c */
++#define LS1046A_FM1_DTSEC3_4_INTERFACE_MODE_RGMII
++//#define CONFIG_FMAN_ENET
++#define RGMII_PHY1_ADDR			0x0
++#define RGMII_PHY2_ADDR			0x1
++
++/*Added for Cortina support*/
++#define CORTINA_PHY_ADDR1 		0xa
++#define CORTINA_PHY_ADDR2		0xb
++
++#endif  /* CONFIG_SYS_DPAA_FMAN */
++#endif  /* CONFIG_NET */
++#endif  /* !SPL_NO_FMAN */
++
++/* USB */
++#ifndef SPL_NO_USB
++#ifdef CONFIG_HAS_FSL_XHCI_USB
++#define CONFIG_USB_MAX_CONTROLLER_COUNT         2
++#endif /* CONFIG_HAS_FSL_XHCI_USB */
++#endif /* !SPL_NO_USB */
++
++/* Dynamic MTD Partition support with mtdparts */
++#define CONFIG_CMD_MTDPARTS
++
++/* UBI FS */
++#define CONFIG_CMD_UBI
++#define CONFIG_CMD_UBIFS
++#define CONFIG_LZO
++
++#define MTDIDS_DEFAULT CONFIG_MTDIDS_DEFAULT
++
++/*Added for Cortina support (the cortina_ucode line)*/
++#define MTDPARTS_DEFAULT    \
++	"mtdparts="\
++		"7e800000.flash:" \
++			"1M@0x0(bl2)," \
++			"2M@0x0(u-boot)," \
++			"256k(env)," \
++			"256k(fman_ucode)," \
++			"256k(cortina_ucode)," \
++			"0x3fc80000(ubipart_nand)," \
++			"1M@0x3ff00000(bbt)ro;" \
++		"60000000.nor:" \
++			"1M@0x0(bl2)," \
++			"2M@0x0(u-boot)," \
++			"256k(env)," \
++			"256k(fman_ucode)," \
++			"256k(cortina_ucode)," \
++			"-(ubipart_nor)"
++
++#undef CONFIG_BOOTCOMMAND
++
++#if defined(CONFIG_SD_BOOT)
++#define SD_BOOTCOMMAND "run setfans; run ubiboot-nand;"
++#elif defined(CONFIG_NOR_BOOT)
++#define IFC_NOR_BOOTCOMMAND "run setfans; run ubiboot-nand;"
++#else
++#define BOOTCMD ""
++#endif
++
++#define SD_ENV	\
++	"update-bl2-sd-nw=" \
++		"dhcp; tftp ${load_addr} ${TFTP_PATH}/bl2_sd.pbl;" \
++		"if test $? = \"0\"; then " \
++			"mmc rescan;" \
++			"setexpr cnt ${filesize} + 0x1ff;" \
++			"setexpr cnt ${cnt} / 0x200;" \
++			"mmc write ${load_addr} 8 ${cnt};" \
++		"fi\0" \
++	\
++	"update-uboot-sd-nw=" \
++		"dhcp; tftp ${load_addr} ${TFTP_PATH}/fip_uboot_sd.bin;" \
++		"if test $? = \"0\"; then " \
++			"mmc rescan;" \
++			"setexpr cnt ${filesize} + 0x1ff;" \
++			"setexpr cnt ${cnt} / 0x200;" \
++			"mmc write ${load_addr} 2048 ${cnt};" \
++		"fi\0" \
++	\
++	"update-bl2-sd-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} bl2_sd.pbl;" \
++		"if test $? = \"0\"; then " \
++			"mmc rescan;" \
++			"setexpr cnt ${filesize} + 0x1ff;" \
++			"setexpr cnt ${cnt} / 0x200;" \
++			"mmc write ${load_addr} 8 ${cnt};" \
++		"fi\0" \
++	\
++	"update-uboot-sd-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} fip_uboot_sd.bin;" \
++		"if test $? = \"0\"; then " \
++			"mmc rescan;" \
++			"setexpr cnt ${filesize} + 0x1ff;" \
++			"setexpr cnt ${cnt} / 0x200;" \
++			"mmc write ${load_addr} 2048 ${cnt};" \
++		"fi\0" \
++	\
++	"update-fman-ucode-sd-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} fsl_fman_ucode_ls1046_r1.0_106_4_18.bin;" \
++		"if test $? = \"0\"; then " \
++			"mmc rescan;" \
++			"setexpr cnt ${filesize} + 0x1ff;" \
++			"setexpr cnt ${cnt} / 0x200;" \
++			"mmc write ${load_addr} 4800 ${cnt};" \
++		"fi\0"
++
++#define NOR_ENV	\
++	"update-bl2-nor-nw=" \
++		"dhcp; tftp ${load_addr} ${TFTP_PATH}/bl2_nor.pbl;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,0;" \
++			"erase nor0,0;" \
++			"cp.w ${load_addr} 0x60000000 ${filesize};" \
++		"fi\0" \
++	\
++	"update-uboot-nor-nw=" \
++		"dhcp; tftp ${load_addr} ${TFTP_PATH}/fip_uboot_nor.bin;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,0;" \
++			"erase nor0,0;" \
++			"cp.w ${load_addr} 0x60100000 ${filesize};" \
++		"fi\0" \
++	\
++	"update-bl2-nor-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} bl2_nor.pbl;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,0;" \
++			"erase nor0,0;" \
++			"cp.w ${load_addr} 0x60000000 ${filesize};" \
++		"fi\0" \
++	\
++	"update-uboot-nor-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} fip_uboot_nor.bin;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,0;" \
++			"erase nor0,0;" \
++			"cp.w ${load_addr} 0x60100000 ${filesize};" \
++		"fi\0" \
++	\
++	"update-fman-ucode-nor-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} fsl_fman_ucode_ls1046_r1.0_106_4_18.bin;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,2;" \
++			"erase nor0,2;" \
++			"cp.w ${load_addr} 0x60340000 ${filesize};" \
++		"fi\0" \
++	\
++	"update-cortina-ucode-nor-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} cs4315-cs4340-PHY-ucode.txt;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,3;" \
++			"erase nor0,3;" \
++			"cp.w ${load_addr} 0x60380000 ${filesize};" \
++		"fi\0" \
++	\
++	"update-ubi-rootfs-nor="\
++		"dhcp;" \
++		"ubi part ubipart_nor;" \
++		"if test $? = \"0\"; then " \
++			"tftp ${load_addr} ${TFTP_PATH}/ubi_rootfs_image.nor.ubifs;" \
++			"if test $? = \"0\"; then " \
++				"ubi write ${load_addr} rootfs ${filesize};" \
++			"fi;" \
++		"fi;" \
++		"\0" \
++	\
++	"ubiboot-nor=" \
++		"ubi part ubipart_nor;" \
++		"ubifsmount ubi0:rootfs;" \
++		"ubifsload ${load_addr} /boot/fitImage;" \
++		"run set_ubiboot_args_nor;" \
++		"bootm ${load_addr}#conf@freescale_qls1046a-4gb-sdk.dtb" \
++		"\0" \
++	\
++	"set_ubiboot_args_nor=setenv bootargs ${bootargs} ${mtdparts} ubi.mtd=ubipart_nor ubi.fm_autoconvert=1 root=ubi0:rootfs rw rootfstype=ubifs \0"
++
++#define NAND_ENV	\
++	"update-fman-ucode-nand-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${load_addr} fsl_fman_ucode_ls1046_r1.0_106_4_18.bin;" \
++		"nand erase.part fman_ucode;" \
++		"nand write ${load_addr} fman_ucode ${filesize};" \
++		"\0" \
++	\
++	"update-cortina-ucode-nand-usb=" \
++		"usb start;" \
++		"fatload usb 0 ${loadaddr} cs4315-cs4340-PHY-ucode.txt;" \
++		"nand erase.part cortina_ucode;" \
++		"nand write ${loadaddr} cortina_ucode ${filesize};" \
++		"\0" \
++	\
++	"update-ubi-rootfs-nand="\
++		"dhcp;" \
++		"ubi part ubipart_nand;" \
++		"if test $? = \"0\"; then " \
++		"tftp ${load_addr} ${TFTP_PATH}/ubi_rootfs_image.nand.ubifs;" \
++		"if test $? = \"0\"; then " \
++			"ubi write ${load_addr} rootfs ${filesize};" \
++		"fi;" \
++		"fi;" \
++	"\0" \
++	\
++	"ubiboot-nand=" \
++		"ubi part ubipart_nand;" \
++		"ubifsmount ubi0:rootfs;" \
++		"ubifsload ${load_addr} /boot/fitImage;" \
++		"run set_ubiboot_args_nand;" \
++		"bootm ${load_addr}#conf@freescale_qls1046a-4gb-sdk.dtb" \
++		"\0" \
++	\
++	"set_ubiboot_args_nand=setenv bootargs ${bootargs} ${mtdparts} ubi.mtd=ubipart_nand ubi.fm_autoconvert=1 root=ubi0:rootfs rw rootfstype=ubifs \0"
++
++#ifdef CONFIG_EXTRA_ENV_SETTINGS
++#undef CONFIG_EXTRA_ENV_SETTINGS
++#endif
++
++#define CONFIG_EXTRA_ENV_SETTINGS \
++	"hwconfig=fsl_ddr:bank_intlv=auto\0"	\
++	"ramdisk_addr=0x800000\0"		\
++	"ramdisk_size=0x2000000\0"		\
++	"fdt_high=0xffffffffffffffff\0"		\
++	"initrd_high=0xffffffffffffffff\0"	\
++	"fdt_addr=0x64f00000\0"                 \
++	"kernel_addr=0x65000000\0"              \
++	"scriptaddr=0x80000000\0"               \
++	"scripthdraddr=0x80080000\0"		\
++	"fdtheader_addr_r=0x80100000\0"         \
++	"kernelheader_addr_r=0x80200000\0"      \
++	"load_addr=0xa0000000\0"		\
++	"kernel_addr_r=0x81000000\0"            \
++	"fdt_addr_r=0x90000000\0"               \
++	"ramdisk_addr_r=0xa0000000\0"           \
++	"kernel_start=0x1000000\0"		\
++	"kernelheader_start=0x800000\0"		\
++	"kernel_load=0xa0000000\0"		\
++	"kernel_size=0x2800000\0"		\
++	"kernelheader_size=0x40000\0"		\
++	"kernel_addr_sd=0x8000\0"		\
++	"kernel_size_sd=0x14000\0"		\
++	"kernelhdr_addr_sd=0x4000\0"		\
++	"kernelhdr_size_sd=0x10\0"		\
++	"console=ttyS0,115200\0"                \
++	\
++	"ethaddr=02:00:00:ba:be:00\0" \
++	"eth1addr=02:00:00:ba:be:01\0" \
++	"eth2addr=02:00:00:ba:be:02\0" \
++	"eth3addr=02:00:00:ba:be:03\0" \
++	"eth4addr=02:00:00:ba:be:04\0" \
++	"eth5addr=02:00:00:ba:be:05\0" \
++	"eth6addr=02:00:00:ba:be:06\0" \
++	\
++	"autoload=no\0" \
++	"TFTP_PATH=.\0" \
++	\
++	"mtdids=" MTDIDS_DEFAULT "\0" \
++	"mtdparts=" MTDPARTS_DEFAULT "\0" \
++	\
++	NAND_ENV \
++	NOR_ENV \
++	SD_ENV \
++	\
++	"setfans=i2c dev 0; i2c mw 0x2e 0x40 1;i2c mw 0x2e 0x7d 0x2;" \
++		"i2c mw 0x2e 0x5c 0xe0;i2c mw 0x2e 0x5d 0xe0;i2c mw 0x2e 0x5e 0xe0;" \
++		"i2c mw 0x2e 0x5f 0xc8;i2c mw 0x2e 0x60 0xc8;i2c mw 0x2e 0x61 0xc8;" \
++		"i2c mw 0x2e 0x30 0x80;i2c mw 0x2e 0x31 0x80;i2c mw 0x2e 0x32 0x80;\0" \
++	\
++	"set_netboot_args=run set_ubiboot_args_nand\0" \
++	"netboot=dhcp; tftp ${load_addr} ${TFTP_PATH}/fitImage; run set_netboot_args; bootm ${load_addr}#conf@freescale_qls1046a-4gb-sdk.dtb\0"
++
++#include <asm/fsl_secure_boot.h>
++
++#endif /* __QLS1046A_4GB_H__ */
+-- 
+2.34.1
+
