@@ -1,6 +1,6 @@
-From 8ecd6ee3ba89fea535614c265fcfd48e6bd10553 Mon Sep 17 00:00:00 2001
+From 453bf106f77e9679b90d04950485b1db801f645d Mon Sep 17 00:00:00 2001
 From: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
-Date: Thu, 9 Nov 2023 06:45:09 +0000
+Date: Thu, 16 Nov 2023 14:23:32 +0000
 Subject: [PATCH] Added support for qls1046a4gb
 
 Signed-off-by: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
@@ -10,21 +10,21 @@ Signed-off-by: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
  arch/arm/dts/Makefile                         |   2 +
  arch/arm/dts/qls1046a_4gb.dts                 |  56 +++
  board/scalys/common/Makefile                  | 103 ++++
- .../scalys/common/board_configuration_data.c  | 388 ++++++++++++++++
+ .../scalys/common/board_configuration_data.c  | 388 ++++++++++++++
  .../scalys/common/board_configuration_data.h  |  22 +
  board/scalys/qls1046a_4gb/Kconfig             |  21 +
  board/scalys/qls1046a_4gb/Makefile            |  13 +
  board/scalys/qls1046a_4gb/ddr.c               |  18 +
  board/scalys/qls1046a_4gb/dragonfruit.c       |  60 +++
  board/scalys/qls1046a_4gb/dragonfruit.h       |  75 +++
- board/scalys/qls1046a_4gb/eth.c               | 329 +++++++++++++
- board/scalys/qls1046a_4gb/qls1046a_4gb.c      | 260 +++++++++++
- configs/qls1046a_4gb_ifc_nor_defconfig        |  81 ++++
- configs/qls1046a_4gb_ifc_nor_xfi_defconfig    |  84 ++++
- configs/qls1046a_4gb_sdcard_defconfig         |  81 ++++
- configs/qls1046a_4gb_sdcard_xfi_defconfig     |  83 ++++
- include/configs/qls1046a_4gb.h                | 439 ++++++++++++++++++
- 19 files changed, 2131 insertions(+)
+ board/scalys/qls1046a_4gb/eth.c               | 329 ++++++++++++
+ board/scalys/qls1046a_4gb/qls1046a_4gb.c      | 260 ++++++++++
+ configs/qls1046a_4gb_ifc_nor_defconfig        |  82 +++
+ configs/qls1046a_4gb_ifc_nor_xfi_defconfig    |  85 ++++
+ configs/qls1046a_4gb_sdcard_defconfig         |  81 +++
+ configs/qls1046a_4gb_sdcard_xfi_defconfig     |  84 ++++
+ include/configs/qls1046a_4gb.h                | 475 ++++++++++++++++++
+ 19 files changed, 2170 insertions(+)
  create mode 100644 arch/arm/dts/qls1046a_4gb.dts
  create mode 100644 board/scalys/common/Makefile
  create mode 100644 board/scalys/common/board_configuration_data.c
@@ -1513,10 +1513,10 @@ index 0000000000..9b85078f30
 +
 diff --git a/configs/qls1046a_4gb_ifc_nor_defconfig b/configs/qls1046a_4gb_ifc_nor_defconfig
 new file mode 100644
-index 0000000000..9a1b65d947
+index 0000000000..896cf49cc9
 --- /dev/null
 +++ b/configs/qls1046a_4gb_ifc_nor_defconfig
-@@ -0,0 +1,81 @@
+@@ -0,0 +1,82 @@
 +CONFIG_ARM=y
 +CONFIG_TARGET_QLS1046A_4GB=y
 +CONFIG_TFABOOT=y
@@ -1563,7 +1563,7 @@ index 0000000000..9a1b65d947
 +CONFIG_OF_CONTROL=y
 +CONFIG_ENV_OVERWRITE=y
 +CONFIG_ENV_IS_IN_FLASH=y
-+CONFIG_ENV_ADDR=0x300000
++CONFIG_ENV_ADDR=0x60300000
 +CONFIG_SYS_RELOC_GD_ENV_ADDR=y
 +CONFIG_DM=y
 +CONFIG_FSL_CAAM=y
@@ -1574,6 +1574,7 @@ index 0000000000..9a1b65d947
 +CONFIG_MTD_NOR_FLASH=y
 +CONFIG_FLASH_CFI_DRIVER=y
 +CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_FLASH_CFI_MTD=y
 +CONFIG_SYS_FLASH_CFI=y
 +CONFIG_MTD_RAW_NAND=y
 +CONFIG_NAND_FSL_IFC=y
@@ -1585,7 +1586,7 @@ index 0000000000..9a1b65d947
 +CONFIG_PHY_GIGE=y
 +CONFIG_E1000=y
 +CONFIG_FMAN_ENET=y
-+CONFIG_SYS_FMAN_FW_ADDR=0x900000
++CONFIG_SYS_FMAN_FW_ADDR=0x340000
 +CONFIG_PCI=y
 +CONFIG_DM_PCI_COMPAT=y
 +CONFIG_PCIE_LAYERSCAPE_RC=y
@@ -1600,10 +1601,10 @@ index 0000000000..9a1b65d947
 +CONFIG_USB_XHCI_DWC3=y
 diff --git a/configs/qls1046a_4gb_ifc_nor_xfi_defconfig b/configs/qls1046a_4gb_ifc_nor_xfi_defconfig
 new file mode 100644
-index 0000000000..bf8821c5de
+index 0000000000..6de9d5d9fc
 --- /dev/null
 +++ b/configs/qls1046a_4gb_ifc_nor_xfi_defconfig
-@@ -0,0 +1,84 @@
+@@ -0,0 +1,85 @@
 +CONFIG_ARM=y
 +CONFIG_TARGET_QLS1046A_4GB=y
 +CONFIG_TFABOOT=y
@@ -1650,7 +1651,7 @@ index 0000000000..bf8821c5de
 +CONFIG_OF_CONTROL=y
 +CONFIG_ENV_OVERWRITE=y
 +CONFIG_ENV_IS_IN_FLASH=y
-+CONFIG_ENV_ADDR=0x300000
++CONFIG_ENV_ADDR=0x60300000
 +CONFIG_SYS_RELOC_GD_ENV_ADDR=y
 +CONFIG_DM=y
 +CONFIG_FSL_CAAM=y
@@ -1661,6 +1662,7 @@ index 0000000000..bf8821c5de
 +CONFIG_MTD_NOR_FLASH=y
 +CONFIG_FLASH_CFI_DRIVER=y
 +CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_FLASH_CFI_MTD=y
 +CONFIG_SYS_FLASH_CFI=y
 +CONFIG_MTD_RAW_NAND=y
 +CONFIG_NAND_FSL_IFC=y
@@ -1675,7 +1677,7 @@ index 0000000000..bf8821c5de
 +CONFIG_PHY_GIGE=y
 +CONFIG_E1000=y
 +CONFIG_FMAN_ENET=y
-+CONFIG_SYS_FMAN_FW_ADDR=0x900000
++CONFIG_SYS_FMAN_FW_ADDR=0x340000
 +CONFIG_PCI=y
 +CONFIG_DM_PCI_COMPAT=y
 +CONFIG_PCIE_LAYERSCAPE_RC=y
@@ -1690,7 +1692,7 @@ index 0000000000..bf8821c5de
 +CONFIG_USB_XHCI_DWC3=y
 diff --git a/configs/qls1046a_4gb_sdcard_defconfig b/configs/qls1046a_4gb_sdcard_defconfig
 new file mode 100644
-index 0000000000..1d8af0cacb
+index 0000000000..201b88c5c1
 --- /dev/null
 +++ b/configs/qls1046a_4gb_sdcard_defconfig
 @@ -0,0 +1,81 @@
@@ -1750,13 +1752,13 @@ index 0000000000..1d8af0cacb
 +CONFIG_MTD_NOR_FLASH=y
 +CONFIG_FLASH_CFI_DRIVER=y
 +CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_FLASH_CFI_MTD=y
 +CONFIG_SYS_FLASH_CFI=y
 +CONFIG_MTD_RAW_NAND=y
 +CONFIG_NAND_FSL_IFC=y
 +CONFIG_SYS_NAND_ONFI_DETECTION=y
 +CONFIG_SF_DEFAULT_BUS=1
 +CONFIG_SF_DEFAULT_MODE=0x3
-+# CONFIG_SPI_FLASH_BAR is not set
 +CONFIG_MTD_UBI=y
 +CONFIG_PHYLIB=y
 +CONFIG_PHY_GIGE=y
@@ -1777,10 +1779,10 @@ index 0000000000..1d8af0cacb
 +CONFIG_USB_XHCI_DWC3=y
 diff --git a/configs/qls1046a_4gb_sdcard_xfi_defconfig b/configs/qls1046a_4gb_sdcard_xfi_defconfig
 new file mode 100644
-index 0000000000..41445aa770
+index 0000000000..e79c19856d
 --- /dev/null
 +++ b/configs/qls1046a_4gb_sdcard_xfi_defconfig
-@@ -0,0 +1,83 @@
+@@ -0,0 +1,84 @@
 +CONFIG_ARM=y
 +CONFIG_TARGET_QLS1046A_4GB=y
 +CONFIG_TFABOOT=y
@@ -1837,6 +1839,7 @@ index 0000000000..41445aa770
 +CONFIG_MTD_NOR_FLASH=y
 +CONFIG_FLASH_CFI_DRIVER=y
 +CONFIG_SYS_FLASH_USE_BUFFER_WRITE=y
++CONFIG_FLASH_CFI_MTD=y
 +CONFIG_SYS_FLASH_CFI=y
 +CONFIG_MTD_RAW_NAND=y
 +CONFIG_NAND_FSL_IFC=y
@@ -1866,10 +1869,10 @@ index 0000000000..41445aa770
 +CONFIG_USB_XHCI_DWC3=y
 diff --git a/include/configs/qls1046a_4gb.h b/include/configs/qls1046a_4gb.h
 new file mode 100644
-index 0000000000..a28eaaea3d
+index 0000000000..2852063d9b
 --- /dev/null
 +++ b/include/configs/qls1046a_4gb.h
-@@ -0,0 +1,439 @@
+@@ -0,0 +1,475 @@
 +/*
 + * Copyright 2019 Teledyne e2v
 + * Copyright 2020 Scalys
@@ -2059,22 +2062,26 @@ index 0000000000..a28eaaea3d
 +#define CONFIG_CMD_UBIFS
 +#define CONFIG_LZO
 +
++#ifdef CONFIG_MTDIDS_DEFAULT
 +#define MTDIDS_DEFAULT CONFIG_MTDIDS_DEFAULT
++#else
++#define MTDIDS_DEFAULT ""
++#endif
 +
 +/*Added for Cortina support (the cortina_ucode line)*/
 +#define MTDPARTS_DEFAULT    \
 +	"mtdparts="\
 +		"7e800000.flash:" \
 +			"1M@0x0(bl2)," \
-+			"2M@0x0(u-boot)," \
++			"2M(u-boot)," \
 +			"256k(env)," \
 +			"256k(fman_ucode)," \
 +			"256k(cortina_ucode)," \
-+			"0x3fc80000(ubipart_nand)," \
++			"0x3fb80000(ubipart_nand)," \
 +			"1M@0x3ff00000(bbt)ro;" \
 +		"60000000.nor:" \
 +			"1M@0x0(bl2)," \
-+			"2M@0x0(u-boot)," \
++			"2M(u-boot)," \
 +			"256k(env)," \
 +			"256k(fman_ucode)," \
 +			"256k(cortina_ucode)," \
@@ -2082,13 +2089,8 @@ index 0000000000..a28eaaea3d
 +
 +#undef CONFIG_BOOTCOMMAND
 +
-+#if defined(CONFIG_SD_BOOT)
-+#define SD_BOOTCOMMAND "run setfans; run ubiboot-nand;"
-+#elif defined(CONFIG_NOR_BOOT)
++#define SD_BOOTCOMMAND "run setfans; run sdboot;"
 +#define IFC_NOR_BOOTCOMMAND "run setfans; run ubiboot-nand;"
-+#else
-+#define BOOTCMD ""
-+#endif
 +
 +#define SD_ENV	\
 +	"update-bl2-sd-nw=" \
@@ -2137,7 +2139,17 @@ index 0000000000..a28eaaea3d
 +			"setexpr cnt ${filesize} + 0x1ff;" \
 +			"setexpr cnt ${cnt} / 0x200;" \
 +			"mmc write ${load_addr} 4800 ${cnt};" \
-+		"fi\0"
++		"fi\0" \
++	"sdboot=" \
++		"run set_mmc_args;" \
++		"ext4load mmc ${mmc_dev}:${mmc_bootpart} ${load_addr} /boot/fitImage;" \
++		"bootm ${load_addr}#conf-freescale_qls1046a-4gb-sdk.dtb" \
++		"\0" \
++	"mmc_bootpart=1" \
++		"\0" \
++	"mmc_dev=0" \
++		"\0" \
++	"set_mmc_args=setenv bootargs ${bootargs} ${mtdparts} root=/dev/mmcblk${mmc_dev}p${mmc_bootpart} rootwait\0"
 +
 +#define NOR_ENV	\
 +	"update-bl2-nor-nw=" \
@@ -2151,8 +2163,8 @@ index 0000000000..a28eaaea3d
 +	"update-uboot-nor-nw=" \
 +		"dhcp; tftp ${load_addr} ${TFTP_PATH}/fip_uboot_nor.bin;" \
 +		"if test $? = \"0\"; then " \
-+			"protect off nor0,0;" \
-+			"erase nor0,0;" \
++			"protect off nor0,1;" \
++			"erase nor0,1;" \
 +			"cp.w ${load_addr} 0x60100000 ${filesize};" \
 +		"fi\0" \
 +	\
@@ -2169,8 +2181,8 @@ index 0000000000..a28eaaea3d
 +		"usb start;" \
 +		"fatload usb 0 ${load_addr} fip_uboot_nor.bin;" \
 +		"if test $? = \"0\"; then " \
-+			"protect off nor0,0;" \
-+			"erase nor0,0;" \
++			"protect off nor0,1;" \
++			"erase nor0,1;" \
 +			"cp.w ${load_addr} 0x60100000 ${filesize};" \
 +		"fi\0" \
 +	\
@@ -2178,8 +2190,8 @@ index 0000000000..a28eaaea3d
 +		"usb start;" \
 +		"fatload usb 0 ${load_addr} fsl_fman_ucode_ls1046_r1.0_106_4_18.bin;" \
 +		"if test $? = \"0\"; then " \
-+			"protect off nor0,2;" \
-+			"erase nor0,2;" \
++			"protect off nor0,3;" \
++			"erase nor0,3;" \
 +			"cp.w ${load_addr} 0x60340000 ${filesize};" \
 +		"fi\0" \
 +	\
@@ -2187,8 +2199,8 @@ index 0000000000..a28eaaea3d
 +		"usb start;" \
 +		"fatload usb 0 ${load_addr} cs4315-cs4340-PHY-ucode.txt;" \
 +		"if test $? = \"0\"; then " \
-+			"protect off nor0,3;" \
-+			"erase nor0,3;" \
++			"protect off nor0,4;" \
++			"erase nor0,4;" \
 +			"cp.w ${load_addr} 0x60380000 ${filesize};" \
 +		"fi\0" \
 +	\
@@ -2203,12 +2215,39 @@ index 0000000000..a28eaaea3d
 +		"fi;" \
 +		"\0" \
 +	\
++	"update-bl2-nor-sd=" \
++		"ext4load mmc ${mmc_dev}:${mmc_bootpart} ${load_addr} /bl2_nor.pbl;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,0;" \
++			"erase nor0,0;" \
++			"cp.w ${load_addr} 0x60000000 ${filesize};" \
++		"fi;" \
++		"\0" \
++	\
++	"update-uboot-nor-sd=" \
++		"ext4load mmc ${mmc_dev}:${mmc_bootpart} ${load_addr} /fip_uboot_nor.bin;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,1;" \
++			"erase nor0,1;" \
++			"cp.w ${load_addr} 0x60100000 ${filesize};" \
++		"fi;" \
++		"\0" \
++	\
++	"update-fman-ucode-nor-sd=" \
++		"ext4load mmc ${mmc_dev}:${mmc_bootpart} ${load_addr} /fsl_fman_ucode_ls1046_r1.0_106_4_18.bin;" \
++		"if test $? = \"0\"; then " \
++			"protect off nor0,3;" \
++			"erase nor0,3;" \
++			"cp.w ${load_addr} 0x60340000 ${filesize};" \
++		"fi;" \
++		"\0" \
++	\
 +	"ubiboot-nor=" \
 +		"ubi part ubipart_nor;" \
 +		"ubifsmount ubi0:rootfs;" \
 +		"ubifsload ${load_addr} /boot/fitImage;" \
 +		"run set_ubiboot_args_nor;" \
-+		"bootm ${load_addr}#conf@freescale_qls1046a-4gb-sdk.dtb" \
++		"bootm ${load_addr}#conf-freescale_qls1046a-4gb-sdk.dtb" \
 +		"\0" \
 +	\
 +	"set_ubiboot_args_nor=setenv bootargs ${bootargs} ${mtdparts} ubi.mtd=ubipart_nor ubi.fm_autoconvert=1 root=ubi0:rootfs rw rootfstype=ubifs \0"
@@ -2244,7 +2283,7 @@ index 0000000000..a28eaaea3d
 +		"ubifsmount ubi0:rootfs;" \
 +		"ubifsload ${load_addr} /boot/fitImage;" \
 +		"run set_ubiboot_args_nand;" \
-+		"bootm ${load_addr}#conf@freescale_qls1046a-4gb-sdk.dtb" \
++		"bootm ${load_addr}#conf-freescale_qls1046a-4gb-sdk.dtb" \
 +		"\0" \
 +	\
 +	"set_ubiboot_args_nand=setenv bootargs ${bootargs} ${mtdparts} ubi.mtd=ubipart_nand ubi.fm_autoconvert=1 root=ubi0:rootfs rw rootfstype=ubifs \0"
@@ -2304,7 +2343,7 @@ index 0000000000..a28eaaea3d
 +		"i2c mw 0x2e 0x30 0x80;i2c mw 0x2e 0x31 0x80;i2c mw 0x2e 0x32 0x80;\0" \
 +	\
 +	"set_netboot_args=run set_ubiboot_args_nand\0" \
-+	"netboot=dhcp; tftp ${load_addr} ${TFTP_PATH}/fitImage; run set_netboot_args; bootm ${load_addr}#conf@freescale_qls1046a-4gb-sdk.dtb\0"
++	"netboot=dhcp; tftp ${load_addr} ${TFTP_PATH}/fitImage; run set_netboot_args; bootm ${load_addr}#conf-freescale_qls1046a-4gb-sdk.dtb\0"
 +
 +#include <asm/fsl_secure_boot.h>
 +

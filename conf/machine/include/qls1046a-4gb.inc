@@ -46,3 +46,27 @@ FMAN_UCODE ?= "fsl_fman_ucode_ls1046_r1.0_106_4_18.bin"
 EXTRA_IMAGEDEPENDS += "fm-ucode rcw qoriq-atf qe-ucode ls2-phy"
 #DISTRO_FEATURES:append = " optee"
 USE_VT = "0"
+
+# Images types generated for this machine
+IMAGE_FSTYPES:append = " tar.bz2 ubifs ubi wic"
+
+# mkfs.ubi options:
+# Find parameter values on target with `ubinfo -a`
+#    -m, --min-io-size=SIZE   minimum I/O unit size
+#    -e, --leb-size=SIZE      logical erase block size
+#    -c, --max-leb-cnt=COUNT  maximum logical erase block count
+MKUBIFS_ARGS = "--space-fixup -m 2048 -e 124KiB -c 10000"
+
+# ubinize options:
+# Find parameter values on target with `mtdinfo -a`
+# -p, --peb-size=<bytes>       size of the physical eraseblock of the flash
+# -m, --min-io-size=<bytes>    minimum input/output unit size of the flash in bytes
+# -s, --sub-page-size=<bytes>  minimum input/output unit used for UBI headers
+UBINIZE_ARGS = "-m 2048 -p 128KiB -s 2048"
+UBI_VOLNAME = "rootfs"
+
+WKS_FILES ?= "${MACHINE}-sdimg.wks"
+
+MACHINE_ESSENTIAL_EXTRA_RRECOMMENDS:append = " \
+    kernel-image-fitimage \
+"
