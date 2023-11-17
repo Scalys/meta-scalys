@@ -11,7 +11,7 @@ SRC_URI:append:qls1046-4gb-dk = "file://0002-SDHC-50MHz.patch"
 
 SRCREV = "04b05c5527e9af8d81254638c307df07dc9a5dd3"
 
-DELTA_KERNEL_DEFCONFIG:append:qls1046a-4gb = " qls1046a-4gb.config"
+DELTA_KERNEL_DEFCONFIG:append:qls1046-4gb-dkb = " qls1046a-4gb.config"
+DELTA_KERNEL_DEFCONFIG:append:qls1046-4gb-dk = " qls1046a-4gb.config"
 
 require recipes-kernel/linux/linux-qoriq.inc
-
