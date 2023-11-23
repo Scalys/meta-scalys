@@ -1,6 +1,6 @@
-From 453bf106f77e9679b90d04950485b1db801f645d Mon Sep 17 00:00:00 2001
+From 5d1697b7810e9e1767b101cb52c940db24b3a7cd Mon Sep 17 00:00:00 2001
 From: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
-Date: Thu, 16 Nov 2023 14:23:32 +0000
+Date: Thu, 23 Nov 2023 14:26:03 +0000
 Subject: [PATCH] Added support for qls1046a4gb
 
 Signed-off-by: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
@@ -1869,7 +1869,7 @@ index 0000000000..e79c19856d
 +CONFIG_USB_XHCI_DWC3=y
 diff --git a/include/configs/qls1046a_4gb.h b/include/configs/qls1046a_4gb.h
 new file mode 100644
-index 0000000000..2852063d9b
+index 0000000000..d4cb611b1b
 --- /dev/null
 +++ b/include/configs/qls1046a_4gb.h
 @@ -0,0 +1,475 @@
@@ -2157,7 +2157,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,0;" \
 +			"erase nor0,0;" \
-+			"cp.w ${load_addr} 0x60000000 ${filesize};" \
++			"cp.b ${load_addr} 0x60000000 ${filesize};" \
 +		"fi\0" \
 +	\
 +	"update-uboot-nor-nw=" \
@@ -2165,7 +2165,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,1;" \
 +			"erase nor0,1;" \
-+			"cp.w ${load_addr} 0x60100000 ${filesize};" \
++			"cp.b ${load_addr} 0x60100000 ${filesize};" \
 +		"fi\0" \
 +	\
 +	"update-bl2-nor-usb=" \
@@ -2174,7 +2174,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,0;" \
 +			"erase nor0,0;" \
-+			"cp.w ${load_addr} 0x60000000 ${filesize};" \
++			"cp.b ${load_addr} 0x60000000 ${filesize};" \
 +		"fi\0" \
 +	\
 +	"update-uboot-nor-usb=" \
@@ -2183,7 +2183,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,1;" \
 +			"erase nor0,1;" \
-+			"cp.w ${load_addr} 0x60100000 ${filesize};" \
++			"cp.b ${load_addr} 0x60100000 ${filesize};" \
 +		"fi\0" \
 +	\
 +	"update-fman-ucode-nor-usb=" \
@@ -2192,7 +2192,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,3;" \
 +			"erase nor0,3;" \
-+			"cp.w ${load_addr} 0x60340000 ${filesize};" \
++			"cp.b ${load_addr} 0x60340000 ${filesize};" \
 +		"fi\0" \
 +	\
 +	"update-cortina-ucode-nor-usb=" \
@@ -2201,7 +2201,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,4;" \
 +			"erase nor0,4;" \
-+			"cp.w ${load_addr} 0x60380000 ${filesize};" \
++			"cp.b ${load_addr} 0x60380000 ${filesize};" \
 +		"fi\0" \
 +	\
 +	"update-ubi-rootfs-nor="\
@@ -2220,7 +2220,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,0;" \
 +			"erase nor0,0;" \
-+			"cp.w ${load_addr} 0x60000000 ${filesize};" \
++			"cp.b ${load_addr} 0x60000000 ${filesize};" \
 +		"fi;" \
 +		"\0" \
 +	\
@@ -2229,7 +2229,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,1;" \
 +			"erase nor0,1;" \
-+			"cp.w ${load_addr} 0x60100000 ${filesize};" \
++			"cp.b ${load_addr} 0x60100000 ${filesize};" \
 +		"fi;" \
 +		"\0" \
 +	\
@@ -2238,7 +2238,7 @@ index 0000000000..2852063d9b
 +		"if test $? = \"0\"; then " \
 +			"protect off nor0,3;" \
 +			"erase nor0,3;" \
-+			"cp.w ${load_addr} 0x60340000 ${filesize};" \
++			"cp.b ${load_addr} 0x60340000 ${filesize};" \
 +		"fi;" \
 +		"\0" \
 +	\
