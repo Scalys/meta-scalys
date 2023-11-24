@@ -1,0 +1,885 @@
+From 0614a43c727d21e5a593e77beb7daa67732fa695 Mon Sep 17 00:00:00 2001
+From: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+Date: Wed, 8 Nov 2023 08:19:41 +0000
+Subject: [PATCH] Added support for qls1046a4gb
+
+Signed-off-by: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+---
+ Makefile                                      |  1 +
+ qls1046a-4gb/Makefile                         |  1 +
+ qls1046a-4gb/README                           | 97 +++++++++++++++++++
+ .../rcw_1600_ifc_nor_xfi.rcw                  | 70 +++++++++++++
+ .../rcw_1600_sdboot_xfi.rcw                   | 70 +++++++++++++
+ .../rcw_1600_ifc_nor.rcw                      | 70 +++++++++++++
+ .../RR_SSSSPPPP_3333_8888/rcw_1600_sdboot.rcw | 70 +++++++++++++
+ qls1046a-4gb/a008851.rcw                      | 30 ++++++
+ qls1046a-4gb/a009531.rcw                      | 28 ++++++
+ qls1046a-4gb/a010477.rcw                      | 33 +++++++
+ qls1046a-4gb/cci_barrier_disable.rcw          |  9 ++
+ qls1046a-4gb/ls1046a.rcwi                     | 85 ++++++++++++++++
+ qls1046a-4gb/qspi_divisor_20.rcw              | 37 +++++++
+ qls1046a-4gb/qspi_divisor_24.rcw              | 37 +++++++
+ qls1046a-4gb/qspi_divisor_32.rcw              | 37 +++++++
+ qls1046a-4gb/qspi_endianness.rcw              |  4 +
+ qls1046a-4gb/serdes_sata.rcw                  |  9 ++
+ qls1046a-4gb/uboot_address.rcw                |  8 ++
+ qls1046a-4gb/uboot_hdr_addr.rcw               |  7 ++
+ qls1046a-4gb/usb_phy_freq.rcw                 |  9 ++
+ 20 files changed, 712 insertions(+)
+ create mode 100644 qls1046a-4gb/Makefile
+ create mode 100644 qls1046a-4gb/README
+ create mode 100644 qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_ifc_nor_xfi.rcw
+ create mode 100644 qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_sdboot_xfi.rcw
+ create mode 100644 qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_ifc_nor.rcw
+ create mode 100644 qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_sdboot.rcw
+ create mode 100644 qls1046a-4gb/a008851.rcw
+ create mode 100644 qls1046a-4gb/a009531.rcw
+ create mode 100644 qls1046a-4gb/a010477.rcw
+ create mode 100644 qls1046a-4gb/cci_barrier_disable.rcw
+ create mode 100644 qls1046a-4gb/ls1046a.rcwi
+ create mode 100644 qls1046a-4gb/qspi_divisor_20.rcw
+ create mode 100644 qls1046a-4gb/qspi_divisor_24.rcw
+ create mode 100644 qls1046a-4gb/qspi_divisor_32.rcw
+ create mode 100644 qls1046a-4gb/qspi_endianness.rcw
+ create mode 100644 qls1046a-4gb/serdes_sata.rcw
+ create mode 100644 qls1046a-4gb/uboot_address.rcw
+ create mode 100644 qls1046a-4gb/uboot_hdr_addr.rcw
+ create mode 100644 qls1046a-4gb/usb_phy_freq.rcw
+
+diff --git a/Makefile b/Makefile
+index 103ac30..29e9b52 100644
+--- a/Makefile
++++ b/Makefile
+@@ -4,6 +4,7 @@ BOARDS = b4420qds b4860qds \
+ 	 ls1021aqds ls1021atwr ls1021atsn \
+ 	 ls1043aqds ls1043ardb \
+ 	 ls1046ardb ls1046aqds ls1046afrwy \
++	 qls1046a-4gb \
+ 	 ls1088ardb ls1088aqds\
+ 	 ls1028ardb ls1028aqds\
+ 	 ls2088ardb ls2088ardb_rev1.1 ls2088aqds \
+diff --git a/qls1046a-4gb/Makefile b/qls1046a-4gb/Makefile
+new file mode 100644
+index 0000000..f77e46b
+--- /dev/null
++++ b/qls1046a-4gb/Makefile
+@@ -0,0 +1 @@
++include ../Makefile.inc
+diff --git a/qls1046a-4gb/README b/qls1046a-4gb/README
+new file mode 100644
+index 0000000..349d0b3
+--- /dev/null
++++ b/qls1046a-4gb/README
+@@ -0,0 +1,97 @@
++The RCW directories names for the LS1046ARDB boards conform to the following
++naming convention:
++
++ab_cdefghij_k_l:
++
++a = 'R' indicates RGMII1@DTSEC3 is supported
++b = 'R' indicates RGMII2@DTSEC4 is supported
++    'N' indicates not available/not used
++
++c = What is available in SerDes1 Lane0
++d = What is available in SerDes1 Lane1
++e = What is available in SerDes1 Lane2
++f = What is available in SerDes1 Lane3
++g = What is available in SerDes2 Lane0
++h = What is available in SerDes2 Lane1
++i = What is available in SerDes2 Lane2
++j = What is available in SerDes2 Lane3
++
++For the Slots (c..j):
++ 'N' is NULL, not available/not used
++ 'P' is PCIe
++ 'X' is XAUI
++ 'S' is SGMII
++ 'Q' if QSGMII
++ 'F' is XFI
++ 'H' is SATA
++ 'A' is AURORA
++
++Serdes1 protocol (k):
++k = 'hex value of serdes1 protocol value'
++
++Serdes2 protocol (l):
++l = 'hex value of serdes2 protocol value'
++
++BIN   Core/Platform/FMan/DDR
++Bin1: 1600MHz/600MHz/700MHz/2100MT/s
++Bin2: 1200MHz/400MHz/500MHz/1600MT/s
++
++Serdes ptotocol:
++================
++RR_FFSSPPPH_1133_5559 means:
++ - RGMII1@DTSEC3 on board
++ - RGMII2@DTSEC4 on board
++ - XFI9@TGEC1 on board
++ - XFI10@TGEC2 on SFP cage
++ - SGMII5@DTSEC5 on board
++ - SGMII6@DTSEC6 on board
++ - PCIe1 on Slot 1, mPCIe
++ - PCIe2 on Slot 2
++ - PCIe3 on Slot 3
++ - SATA
++ - SERDES1 Protocol is 0x1133
++ - SERDES2 Protocol is 0x5559
++
++RR_FFSSPPPN_1133_5506 means:
++ - RGMII1@DTSEC3 on board
++ - RGMII2@DTSEC4 on board
++ - XFI9@TGEC1 on board
++ - XFI10@TGEC2 on SFP cage
++ - SGMII5@DTSEC5 on board
++ - SGMII6@DTSEC6 on board
++ - PCIe1 on Slot 1, mPCIe
++ - PCIe2 on Slot 2
++ - PCIe3 on Slot 3
++ - SERDES1 Protocol is 0x1133
++ - SERDES2 Protocol is 0x5506
++
++Files naming convention
++=============================
++rcw_x.rcw
++rcw_x_bootmode.rcw
++rcw_x_specialsetting.rcw
++x = Core frequency
++bootmode = bootmode:qspiboot and so on.
++specialsetting = special setting:
++			sben:Secure boot
++For example,
++	rcw_1600_qspiboot.rcw means rcw for core frequency of 1600MHz with QSPI boot.
++
++For more information please refer to the comments in rcw file.
++
++Errata Workaround Implemented
++=============================
++A-008851:
++	Invalid transmitter/receiver preset values are used in Gen3 equalization
++	phases during link training for RC mode
++	This errata is valid only for PCI gen3.
++	Workaround:
++		write 0x00000001 to MISC_CONTROL_1_OFF
++		write 0x4747 to Lane Equalization Control register for each lane
++
++A-010477:
++	The PCI Express controller may not be able to establish the link at Gen3
++	speed successfully with some Gen3-capable link partner. The link will be
++	down-trained to either Gen1 or Gen2 speed.
++	Workaround:
++		Write 0x00800401 to GEN3 Control Register (GEN3_RELATED_OFF)
+diff --git a/qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_ifc_nor_xfi.rcw b/qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_ifc_nor_xfi.rcw
+new file mode 100644
+index 0000000..8821b14
+--- /dev/null
++++ b/qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_ifc_nor_xfi.rcw
+@@ -0,0 +1,70 @@
++/*
++ * QLS1046A RCW for SerDes Protocol 0x3333_8888
++ *
++ * Frequencies:
++ *
++ * Sys Clock: 100 MHz
++ * DDR_Refclock: 100 MHz
++ *
++ * Core		-- 1600 MHz (Mul 16)
++ * Platform	-- 700 MHz (Mul 7)
++ * DDR		-- 2100 MT/s (Mul 21)
++ * FMan		-- 800 MHz (CGA2 /2)
++ *
++ */
++
++#include <ls1046a.rcwi>
++
++SYS_PLL_RAT=7
++MEM_PLL_RAT=21
++CGA_PLL1_RAT=16
++CGA_PLL2_RAT=16
++SRDS_PRTCL_S1=4403
++SRDS_PRTCL_S2=34952
++SRDS_PLL_REF_CLK_SEL_S1=1
++SRDS_PLL_PD_S2=2
++SRDS_DIV_PEX_S2=1
++DDR_FDBK_MULT=2
++PBI_SRC=14
++IFC_MODE=35
++HWA_CGA_M1_CLK_SEL=6
++DRAM_LAT=1
++UART_BASE=5
++IRQ_OUT=1
++IFC_GRP_D_BASE=1
++IFC_GRP_A_BASE=1
++LVDD_VSEL=1
++EM2=1
++TVDD_VSEL=1
++IIC2_EXT=2
++SYSCLK_FREQ=600
++HWA_CGA_M2_CLK_SEL=1
++
++.pbi
++// Set the BOOTLOCPTR
++write 0x570600, 0x00000000
++write 0x570604, 0x10000000
++.end
++
++#include <cci_barrier_disable.rcw>
++
++.pbi
++write 0x570418, 0x0000009c # 100MHz - SYSCLK
++write 0x57041c, 0x0000009c
++write 0x570420, 0x0000009c
++.end
++
++#include <a010477.rcw>
++#include <a008851.rcw>
++#include <a009531.rcw>
++
++.pbi
++// Alt base register
++write 0x570158, 0x00001000
++flush
++.end
++
++.pbi
++// flush PBI data
++write 0x6100c0, 0x000fffff
++.end
+diff --git a/qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_sdboot_xfi.rcw b/qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_sdboot_xfi.rcw
+new file mode 100644
+index 0000000..8edadd7
+--- /dev/null
++++ b/qls1046a-4gb/RR_FFSSPPPP_1133_8888/rcw_1600_sdboot_xfi.rcw
+@@ -0,0 +1,70 @@
++/*
++ * QLS1046A RCW for SerDes Protocol 0x3333_8888
++ *
++ * Frequencies:
++ *
++ * Sys Clock: 100 MHz
++ * DDR_Refclock: 100 MHz
++ *
++ * Core		-- 1600 MHz (Mul 16)
++ * Platform	-- 700 MHz (Mul 7)
++ * DDR		-- 2100 MT/s (Mul 21)
++ * FMan		-- 800 MHz (CGA2 /2)
++ *
++ */
++
++#include <ls1046a.rcwi>
++
++SYS_PLL_RAT=7
++MEM_PLL_RAT=21
++CGA_PLL1_RAT=16
++CGA_PLL2_RAT=16
++SRDS_PRTCL_S1=4403
++SRDS_PRTCL_S2=34952
++SRDS_PLL_REF_CLK_SEL_S1=1
++SRDS_PLL_PD_S2=2
++SRDS_DIV_PEX_S2=1
++DDR_FDBK_MULT=2
++PBI_SRC=6
++IFC_MODE=64
++HWA_CGA_M1_CLK_SEL=6
++DRAM_LAT=1
++UART_BASE=5
++IRQ_OUT=1
++IFC_GRP_D_BASE=1
++IFC_GRP_A_BASE=1
++LVDD_VSEL=1
++EM2=1
++TVDD_VSEL=1
++IIC2_EXT=2
++SYSCLK_FREQ=600
++HWA_CGA_M2_CLK_SEL=1
++
++.pbi
++// Set the BOOTLOCPTR
++write 0x570600, 0x00000000
++write 0x570604, 0x10000000
++.end
++
++#include <cci_barrier_disable.rcw>
++
++.pbi
++write 0x570418, 0x0000009c # 100MHz - SYSCLK
++write 0x57041c, 0x0000009c
++write 0x570420, 0x0000009c
++.end
++
++#include <a010477.rcw>
++#include <a008851.rcw>
++#include <a009531.rcw>
++
++.pbi
++// Alt base register
++write 0x570158, 0x00001000
++flush
++.end
++
++.pbi
++// flush PBI data
++write 0x6100c0, 0x000fffff
++.end
+diff --git a/qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_ifc_nor.rcw b/qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_ifc_nor.rcw
+new file mode 100644
+index 0000000..bed6e8e
+--- /dev/null
++++ b/qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_ifc_nor.rcw
+@@ -0,0 +1,70 @@
++/*
++ * QLS1046A RCW for SerDes Protocol 0x3333_8888
++ *
++ * Frequencies:
++ *
++ * Sys Clock: 100 MHz
++ * DDR_Refclock: 100 MHz
++ *
++ * Core		-- 1600 MHz (Mul 16)
++ * Platform	-- 700 MHz (Mul 7)
++ * DDR		-- 2100 MT/s (Mul 21)
++ * FMan		-- 800 MHz (CGA2 /2)
++ *
++ */
++
++#include <ls1046a.rcwi>
++
++SYS_PLL_RAT=7
++MEM_PLL_RAT=21
++CGA_PLL1_RAT=16
++CGA_PLL2_RAT=16
++SRDS_PRTCL_S1=13107
++SRDS_PRTCL_S2=34952
++SRDS_PLL_PD_S1=2
++SRDS_PLL_PD_S2=2
++SRDS_DIV_PEX_S1=1
++DDR_FDBK_MULT=2
++PBI_SRC=14
++IFC_MODE=35
++HWA_CGA_M1_CLK_SEL=6
++DRAM_LAT=1
++UART_BASE=5
++IRQ_OUT=1
++IFC_GRP_D_BASE=1
++IFC_GRP_A_BASE=1
++LVDD_VSEL=1
++EM2=1
++TVDD_VSEL=1
++IIC2_EXT=2
++SYSCLK_FREQ=600
++HWA_CGA_M2_CLK_SEL=1
++
++.pbi
++// Set the BOOTLOCPTR
++write 0x570600, 0x00000000
++write 0x570604, 0x10000000
++.end
++
++#include <cci_barrier_disable.rcw>
++
++.pbi
++write 0x570418, 0x0000009c # 100MHz - SYSCLK
++write 0x57041c, 0x0000009c
++write 0x570420, 0x0000009c
++.end
++
++#include <a010477.rcw>
++#include <a008851.rcw>
++#include <a009531.rcw>
++
++.pbi
++// Alt base register
++write 0x570158, 0x00001000
++flush
++.end
++
++.pbi
++// flush PBI data
++write 0x6100c0, 0x000fffff
++.end
+diff --git a/qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_sdboot.rcw b/qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_sdboot.rcw
+new file mode 100644
+index 0000000..65349c1
+--- /dev/null
++++ b/qls1046a-4gb/RR_SSSSPPPP_3333_8888/rcw_1600_sdboot.rcw
+@@ -0,0 +1,70 @@
++/*
++ * QLS1046A RCW for SerDes Protocol 0x3333_8888
++ *
++ * Frequencies:
++ *
++ * Sys Clock: 100 MHz
++ * DDR_Refclock: 100 MHz
++ *
++ * Core		-- 1600 MHz (Mul 16)
++ * Platform	-- 700 MHz (Mul 7)
++ * DDR		-- 2100 MT/s (Mul 21)
++ * FMan		-- 800 MHz (CGA2 /2)
++ *
++ */
++
++#include <ls1046a.rcwi>
++
++SYS_PLL_RAT=7
++MEM_PLL_RAT=21
++CGA_PLL1_RAT=16
++CGA_PLL2_RAT=16
++SRDS_PRTCL_S1=13107
++SRDS_PRTCL_S2=34952
++SRDS_PLL_PD_S1=2
++SRDS_PLL_PD_S2=2
++SRDS_DIV_PEX_S1=1
++DDR_FDBK_MULT=2
++PBI_SRC=6
++IFC_MODE=64
++HWA_CGA_M1_CLK_SEL=6
++DRAM_LAT=1
++UART_BASE=5
++IRQ_OUT=1
++IFC_GRP_D_BASE=1
++IFC_GRP_A_BASE=1
++LVDD_VSEL=1
++EM2=1
++TVDD_VSEL=1
++IIC2_EXT=2
++SYSCLK_FREQ=600
++HWA_CGA_M2_CLK_SEL=1
++
++.pbi
++// Set the BOOTLOCPTR
++write 0x570600, 0x00000000
++write 0x570604, 0x10000000
++.end
++
++#include <cci_barrier_disable.rcw>
++
++.pbi
++write 0x570418, 0x0000009c # 100MHz - SYSCLK
++write 0x57041c, 0x0000009c
++write 0x570420, 0x0000009c
++.end
++
++#include <a010477.rcw>
++#include <a008851.rcw>
++#include <a009531.rcw>
++
++.pbi
++// Alt base register
++write 0x570158, 0x00001000
++flush
++.end
++
++.pbi
++// flush PBI data
++write 0x6100c0, 0x000fffff
++.end
+diff --git a/qls1046a-4gb/a008851.rcw b/qls1046a-4gb/a008851.rcw
+new file mode 100644
+index 0000000..739c398
+--- /dev/null
++++ b/qls1046a-4gb/a008851.rcw
+@@ -0,0 +1,30 @@
++/*
++ * Work-around for erratum A-008851
++ *
++ * A-008851: Invalid transmitter/receiver preset values are used
++ * in Gen3 equalization phases during link training for RC mode
++ * Workaround:
++ *  write 0x00000001 to MISC_CONTROL_1_OFF
++ *  write 0x4747 to Lane Equalization Control register for each lane
++ *
++ * ALTCBAR Register (SCFG_ALTCBAR): 0x0157_0158 big endian
++ * PBL is also big endian block on LS1046A
++ */
++
++.pbi
++write 0x570158, 0x00000300
++flush
++
++awrite 0x4008bc, 0x01000000
++awrite 0x400154, 0x47474747
++awrite 0x400158, 0x47474747
++awrite 0x4008bc, 0x00000000
++
++awrite 0x5008bc, 0x01000000
++awrite 0x500154, 0x00004747
++awrite 0x5008bc, 0x00000000
++
++awrite 0x6008bc, 0x01000000
++awrite 0x600154, 0x47474747
++awrite 0x6008bc, 0x00000000
++.end
+diff --git a/qls1046a-4gb/a009531.rcw b/qls1046a-4gb/a009531.rcw
+new file mode 100644
+index 0000000..980cc43
+--- /dev/null
++++ b/qls1046a-4gb/a009531.rcw
+@@ -0,0 +1,28 @@
++/*
++ * Work-around for erratum A-009531
++ *
++ * Description:
++ * As defined in section 2.2.6.4, Relaxed Ordering and ID-Based Ordering (IDO)
++ * Attributes of the PCI Express Base Specification Rev 3.1, “A Completer
++ * is permitted to set IDO only if the IDO Completion Enable bit in the Device
++ * Control 2 Register is set. It is not required to copy the value of IDO from
++ * the Request into the Completion(s) for that Request".
++ *
++ * However, the PCI Express controller as the completer sets the IDO bit in the
++ * completion packet header, in response to non-posted requests (memory read) with
++ * IDO bit set in the packet header, even if the IDO Completion Enable bit in the
++ * Device Control 2 Register is not set.
++ *
++ * Impact:
++ * The PCI Express controller as the completer sends completion packets with IDO
++ * bit set in packet header even when the IDO Completion Enable bit is cleared in
++ * the controller’s Device Control 2 Register.
++ */
++
++.pbi
++write 0x570158, 0x00000300
++flush
++awrite 0x400098, 0x00000000
++awrite 0x500098, 0x00000000
++awrite 0x600098, 0x00000000
++.end
+diff --git a/qls1046a-4gb/a010477.rcw b/qls1046a-4gb/a010477.rcw
+new file mode 100644
+index 0000000..8540395
+--- /dev/null
++++ b/qls1046a-4gb/a010477.rcw
+@@ -0,0 +1,33 @@
++/*
++ * Work-around for erratum A-010477
++ *
++ * Description:
++ * The PCI Express controller core implementation follows a newer version
++ * of the PIPE (PHY Interface for PCI Express) specification. With the
++ * controller's default configuration, the Gen3 equalization negotiation
++ * handshake signaling works slightly differently from what the device's
++ * PCI Express PHY expects. As such, the controller may fail the Gen3 link
++ * training with some Gen3-capable link partner and down-train to either
++ * Gen1 or Gen2.
++ *
++ * Impact:
++ * The PCI Express controller may not be able to establish the link at
++ * Gen3 speed successfully with some Gen3-capable link partner. The link
++ * will be down-trained to either Gen1 or Gen2 speed. However, the link
++ * width negotiation is not impacted.
++ *
++ * Workaround:
++ * Write the value of 0x0080_0401 to the GEN3 Control Register
++ * (GEN3_RELATED_OFF) located at each PCI Express controller’s
++ * configuration space offset 0x890 during the pre-boot initialization
++ * (PBI) stage.
++ */
++
++.pbi
++write 0x570158, 0x00000300
++flush
++
++awrite 0x400890, 0x01048000
++awrite 0x500890, 0x01048000
++awrite 0x600890, 0x01048000
++.end
+diff --git a/qls1046a-4gb/cci_barrier_disable.rcw b/qls1046a-4gb/cci_barrier_disable.rcw
+new file mode 100644
+index 0000000..2fa9629
+--- /dev/null
++++ b/qls1046a-4gb/cci_barrier_disable.rcw
+@@ -0,0 +1,9 @@
++/*
++ * PBI Commands for LS1046AQDS and LS1046ARDB
++ * The same setting of LS1043A
++ */
++
++.pbi
++write 0x570178, 0x0000e010
++write 0x180000, 0x00000008
++.end
+diff --git a/qls1046a-4gb/ls1046a.rcwi b/qls1046a-4gb/ls1046a.rcwi
+new file mode 100644
+index 0000000..a1dc700
+--- /dev/null
++++ b/qls1046a-4gb/ls1046a.rcwi
+@@ -0,0 +1,85 @@
++%size=512
++%sysaddr=ee0100
++%pbladdr=610000
++
++SYS_PLL_CFG[0:1]
++SYS_PLL_RAT[2:6]
++MEM_PLL_CFG[8:9]
++MEM_PLL_RAT[10:15]
++CGA_PLL1_CFG[24:25]
++CGA_PLL1_RAT[26:31]
++CGA_PLL2_CFG[32:33]
++CGA_PLL2_RAT[34:39]
++C1_PLL_SEL[96:99]
++SRDS_PRTCL_S1[128:143]
++SRDS_PRTCL_S2[144:159]
++SRDS_PLL_REF_CLK_SEL_S1[160:161]
++SRDS_PLL_REF_CLK_SEL_S2[162:163]
++SRDS_PLL_PD_S1[168:169]
++SRDS_PLL_PD_S2[170:171]
++SRDS_DIV_PEX_S1[176:177]
++SRDS_DIV_PEX_S2[178:179]
++DDR_REFCLK_SEL[186:187]
++SRDS_REFCLK_SEL_S1[188]
++SRDS_REFCLK_SEL_S2[189]
++DDR_FDBK_MULT[190:191]
++PBI_SRC[192:195]
++BOOT_HO[201]
++SB_EN[202]
++IFC_MODE[203:211]
++HWA_CGA_M1_CLK_SEL[224:226]
++DRAM_LAT[230:231]
++DDR_RATE[232]
++DDR_RSV0[234]
++SYS_PLL_SPD[242]
++MEM_PLL_SPD[243]
++CGA_PLL1_SPD[244]
++CGA_PLL2_SPD[245]
++HOST_AGT_PEX[264:266]
++GP_INFO[288:319]
++LVDS_TERM_SEL_OVRD[323]
++LVDS_TERM_SEL_VALUE[324:326]
++UART_EXT[354:356]
++IRQ_EXT[357:359]
++SPI_EXT[360:362]
++SDHC_EXT[363:365]
++UART_BASE[366:368]
++ASLEEP[369]
++RTC[370]
++SDHC_BASE[371]
++IRQ_OUT[372]
++IRQ_BASE[373:381]
++SPI_BASE[382:383]
++IFC_GRP_A_EXT[384:386]
++IFC_GRP_B_EXT[387:389]
++IFC_GRP_C_EXT[390:392]
++IFC_GRP_D_EXT[393:395]
++IFC_GRP_E1_EXT[396:398]
++IFC_GRP_F_EXT[399:401]
++IFC_GRP_G_EXT[402:404]
++IFC_GRP_E1_BASE[405]
++IFC_GRP_E2_BASE[406]
++IFC_GRP_D_BASE[407]
++IFC_GRP_C_BASE[409]
++IFC_GRP_B_BASE[410:411]
++IFC_GRP_A_BASE[412:413]
++IFC_A_22_24[415]
++EC1[416:418]
++EC2[419:421]
++LVDD_VSEL[422:423]
++EM1[425]
++EM2[426]
++EMI2_DMODE[427]
++EMI2_CMODE[428]
++USB_DRVVBUS[429]
++USB_PWRFAULT[430]
++TVDD_VSEL[433:434]
++DVDD_VSEL[435:436]
++QE_CLK_OVRRIDE[437]
++EMI1_DMODE[438]
++EVDD_VSEL[439:440]
++IIC2_BASE[441:443]
++EMI1_CMODE[444]
++IIC2_EXT[445:447]
++SYSCLK_FREQ[472:481]
++HWA_CGA_M2_CLK_SEL[509:511]
+diff --git a/qls1046a-4gb/qspi_divisor_20.rcw b/qls1046a-4gb/qspi_divisor_20.rcw
+new file mode 100644
+index 0000000..0c882d5
+--- /dev/null
++++ b/qls1046a-4gb/qspi_divisor_20.rcw
+@@ -0,0 +1,37 @@
++/* Increase the QSPI controller speed, rather than using default speed
++ *
++ * The QuadSPI configuration register contains the bits for QuadSPI configuration. This
++ * register is reset at HRESET.
++ * Address: 157_0000h base + 15Ch offset = 157_015Ch.
++ * boot from hardwareROM/bootROM will happen at default speed, but once QSPI driver is init
++ * increased speed can be observed.
++ *
++ * Top 4-bits are for CLK_SEL
++ * These bits control the division of CGA1/CGA2 PLL clock to generate QuadSPI interface clocks.
++ * 0000 Divide by 256
++ * 0001 Divide by 64 (default) as per RM
++ * 0010 Divide by 32
++ * 0011 Divide by 24
++ * 0100 Divide by 20 (set to this now)
++ * 0101 Divide by 16
++ * 0110 Divide by 12
++ * 0111 Divide by 8
++ *
++ * ----------------------------------------------
++ * |Core Freq(Mhz)	| QSPI Freq(with divisor 20)|
++ * ----------------------------------------------
++ * |          800	|		40Mhz				|
++ * ----------------------------------------------
++ * |          1200	|		60Mhz				|
++ * ----------------------------------------------
++ * |          1400	|		70Mhz				|
++ * ----------------------------------------------
++ * |          1600	|		80Mhz				|
++ * ----------------------------------------------
++ * |          1800	|		90Mhz				|
++ * ----------------------------------------------
++ */
++
++.pbi
++write 0x57015C, 0x40100000
++.end
+diff --git a/qls1046a-4gb/qspi_divisor_24.rcw b/qls1046a-4gb/qspi_divisor_24.rcw
+new file mode 100644
+index 0000000..87504cf
+--- /dev/null
++++ b/qls1046a-4gb/qspi_divisor_24.rcw
+@@ -0,0 +1,37 @@
++/* Increase the QSPI controller speed, rather than using default speed
++ *
++ * The QuadSPI configuration register contains the bits for QuadSPI configuration. This
++ * register is reset at HRESET.
++ * Address: 157_0000h base + 15Ch offset = 157_015Ch.
++ * boot from hardwareROM/bootROM will happen at default speed, but once QSPI driver is init
++ * increased speed can be observed.
++ *
++ * Top 4-bits are for CLK_SEL
++ * These bits control the division of CGA1/CGA2 PLL clock to generate QuadSPI interface clocks.
++ * 0000 Divide by 256
++ * 0001 Divide by 64 (default) as per RM
++ * 0010 Divide by 32
++ * 0011 Divide by 24 (set to this now)
++ * 0100 Divide by 20
++ * 0101 Divide by 16
++ * 0110 Divide by 12
++ * 0111 Divide by 8
++ *
++ * ----------------------------------------------
++ * |Core Freq(Mhz)	| QSPI Freq(with divisor 24)|
++ * ----------------------------------------------
++ * |          800	|		33.33Mhz			|
++ * ----------------------------------------------
++ * |          1200	|		50Mhz				|
++ * ----------------------------------------------
++ * |          1400	|		58.33Mhz			|
++ * ----------------------------------------------
++ * |          1600	|		66.66Mhz			|
++ * ----------------------------------------------
++ * |          1800	|		75Mhz				|
++ * ----------------------------------------------
++ */
++
++.pbi
++write 0x57015C, 0x30100000
++.end
+diff --git a/qls1046a-4gb/qspi_divisor_32.rcw b/qls1046a-4gb/qspi_divisor_32.rcw
+new file mode 100644
+index 0000000..dd95203
+--- /dev/null
++++ b/qls1046a-4gb/qspi_divisor_32.rcw
+@@ -0,0 +1,37 @@
++/* Increase the QSPI controller speed, rather than using default speed
++ *
++ * The QuadSPI configuration register contains the bits for QuadSPI configuration. This
++ * register is reset at HRESET.
++ * Address: 157_0000h base + 15Ch offset = 157_015Ch.
++ * boot from hardwareROM/bootROM will happen at default speed, but once QSPI driver is init
++ * increased speed can be observed.
++ *
++ * Top 4-bits are for CLK_SEL
++ * These bits control the division of CGA1/CGA2 PLL clock to generate QuadSPI interface clocks.
++ * 0000 Divide by 256
++ * 0001 Divide by 64 (default) as per RM
++ * 0010 Divide by 32 (set to this now)
++ * 0011 Divide by 24
++ * 0100 Divide by 20
++ * 0101 Divide by 16
++ * 0110 Divide by 12
++ * 0111 Divide by 8
++ *
++ * ----------------------------------------------
++ * |Core Freq(Mhz)	| QSPI Freq(with divisor 32)|
++ * ----------------------------------------------
++ * |	800Mhz		|		25Mhz				|
++ * ----------------------------------------------
++ * |	1200Mhz		|		37.5Mhz				|
++ * ----------------------------------------------
++ * |	1400Mhz		|		43.75Mhz			|
++ * ----------------------------------------------
++ * |	1600Mhz		|		50Mhz				|
++ * ----------------------------------------------
++ * |	1800Mhz		|		56.25Mhz			|
++ * ----------------------------------------------
++ */
++
++.pbi
++write 0x57015C, 0x20100000
++.end
+diff --git a/qls1046a-4gb/qspi_endianness.rcw b/qls1046a-4gb/qspi_endianness.rcw
+new file mode 100644
+index 0000000..a4dcd4b
+--- /dev/null
++++ b/qls1046a-4gb/qspi_endianness.rcw
+@@ -0,0 +1,4 @@
++.pbi
++/* QSPI END_CFG 64 bit LE */
++write 0x550000, 0x000f400c
++.end
+diff --git a/qls1046a-4gb/serdes_sata.rcw b/qls1046a-4gb/serdes_sata.rcw
+new file mode 100644
+index 0000000..4c4d49a
+--- /dev/null
++++ b/qls1046a-4gb/serdes_sata.rcw
+@@ -0,0 +1,9 @@
++
++/*
++ * Clear SerDes RxBoost on SD2 lane D
++ */
++
++.pbi
++write 0xeb1300, 0x80104e20
++write 0xeb08dc, 0x00502880
++.end
+diff --git a/qls1046a-4gb/uboot_address.rcw b/qls1046a-4gb/uboot_address.rcw
+new file mode 100644
+index 0000000..7e1c493
+--- /dev/null
++++ b/qls1046a-4gb/uboot_address.rcw
+@@ -0,0 +1,8 @@
++/*
++ * PBI Commands for LS1046AQDS and LS1046ARDB
++ */
++
++.pbi
++write 0x570600, 0x00000000
++write 0x570604, 0x60100000
++.end
+diff --git a/qls1046a-4gb/uboot_hdr_addr.rcw b/qls1046a-4gb/uboot_hdr_addr.rcw
+new file mode 100644
+index 0000000..931dbe7
+--- /dev/null
++++ b/qls1046a-4gb/uboot_hdr_addr.rcw
+@@ -0,0 +1,7 @@
++/*
++ * PBI Commands for LS1046AQDS and LS1046ARDB
++ */
++
++.pbi
++write 0xee0200, 0x606c0000
++.end
+diff --git a/qls1046a-4gb/usb_phy_freq.rcw b/qls1046a-4gb/usb_phy_freq.rcw
+new file mode 100644
+index 0000000..38b923b
+--- /dev/null
++++ b/qls1046a-4gb/usb_phy_freq.rcw
+@@ -0,0 +1,9 @@
++/*
++ * PBI Commands for LS1046A
++ */
++
++.pbi
++write 0x570418, 0x0000009e
++write 0x57041c, 0x0000009e
++write 0x570420, 0x0000009e
++.end

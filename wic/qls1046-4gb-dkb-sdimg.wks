@@ -1,0 +1,20 @@
+# short-description: Create SD card image with a boot partition
+# long-description:
+# Create an image that can be written onto a SD card using dd for use
+# with QLS1046-4GB board.
+# It uses u-boot.
+#
+# The disk layout used is:
+#  - ----- ----------- ------------ --------------------
+# | | PBL | FIP UBOOT | FMAN_UCODE |    rootfs          |
+#  - ----- ----------- ------------ --------------------
+# ^ ^     ^           ^
+# | |     |           |
+# 0 4kiB  1MiB        3MiB
+#
+part PBL --source rawcopy --sourceparams="file=atf/bl2_sd.pbl" --no-table --align 4
+part FIP --source rawcopy --sourceparams="file=atf/fip_uboot_sd.bin" --no-table --align 1024
+part FIP --source rawcopy --sourceparams="file=fsl_fman_ucode_ls1046_r1.0_106_4_18.bin" --no-table --align 9216
+part / --source rootfs --fstype=ext4 --label rootfs --align 16384
+
+bootloader --ptable msdos

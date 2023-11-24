@@ -1,0 +1,1336 @@
+From a479ca5fba58a582e3400379df97e613934e5d6b Mon Sep 17 00:00:00 2001
+From: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+Date: Tue, 17 Oct 2023 11:36:29 +0000
+Subject: [PATCH] Added qls1046a DTS files
+
+Signed-off-by: Siarhei Yasinski <siarhei.yasinski@sintecs.eu>
+---
+ arch/arm64/boot/dts/freescale/Makefile        |   4 +
+ .../dts/freescale/qls1046a-4gb-sdk-xfi.dts    | 284 +++++++++++++++
+ .../boot/dts/freescale/qls1046a-4gb-sdk.dts   | 284 +++++++++++++++
+ .../boot/dts/freescale/qls1046a-4gb-xfi.dts   | 327 ++++++++++++++++++
+ .../arm64/boot/dts/freescale/qls1046a-4gb.dts | 304 ++++++++++++++++
+ arch/arm64/configs/qls1046a-4gb.config        |  72 ++++
+ 6 files changed, 1275 insertions(+)
+ create mode 100644 arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk-xfi.dts
+ create mode 100644 arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk.dts
+ create mode 100644 arch/arm64/boot/dts/freescale/qls1046a-4gb-xfi.dts
+ create mode 100644 arch/arm64/boot/dts/freescale/qls1046a-4gb.dts
+ create mode 100644 arch/arm64/configs/qls1046a-4gb.config
+
+diff --git a/arch/arm64/boot/dts/freescale/Makefile b/arch/arm64/boot/dts/freescale/Makefile
+index 7b1a129e6b9f..3f24c0526b9d 100644
+--- a/arch/arm64/boot/dts/freescale/Makefile
++++ b/arch/arm64/boot/dts/freescale/Makefile
+@@ -47,6 +47,10 @@ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-lx2160a-honeycomb.dtb
+ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-lx2160a-qds.dtb
+ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-lx2160a-rdb.dtb
+ dtb-$(CONFIG_ARCH_LAYERSCAPE) += fsl-lx2162a-qds.dtb
++dtb-$(CONFIG_ARCH_LAYERSCAPE) += qls1046a-4gb.dtb
++dtb-$(CONFIG_ARCH_LAYERSCAPE) += qls1046a-4gb-xfi.dtb
++dtb-$(CONFIG_ARCH_LAYERSCAPE) += qls1046a-4gb-sdk.dtb
++dtb-$(CONFIG_ARCH_LAYERSCAPE) += qls1046a-4gb-sdk-xfi.dtb
+ 
+ fsl-ls1028a-qds-13bb-dtbs := fsl-ls1028a-qds.dtb fsl-ls1028a-qds-13bb.dtbo
+ fsl-ls1028a-qds-65bb-dtbs := fsl-ls1028a-qds.dtb fsl-ls1028a-qds-65bb.dtbo
+diff --git a/arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk-xfi.dts b/arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk-xfi.dts
+new file mode 100644
+index 000000000000..ab779736e00d
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk-xfi.dts
+@@ -0,0 +1,284 @@
++/*
++ * Device Tree Include file for Freescale Layerscape-1046A family SoC.
++ *
++ * Copyright 2014-2015 Freescale Semiconductor, Inc.
++ * Copyright 2018-2019 NXP
++ *
++ * Mingkai Hu <Mingkai.hu@freescale.com>
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPLv2 or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This library is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This library is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ *
++ *
++ * Copyright 2022 Scalys
++ *
++ * opensource@scalys.com
++ *
++ */
++
++#include "qls1046a-4gb-xfi.dts"
++#include "qoriq-qman-portals-sdk.dtsi"
++#include "qoriq-bman-portals-sdk.dtsi"
++
++&bman_fbpr {
++	compatible = "fsl,bman-fbpr";
++	alloc-ranges = <0 0 0x10000 0>;
++};
++&qman_fqd {
++	compatible = "fsl,qman-fqd";
++	alloc-ranges = <0 0 0x10000 0>;
++};
++&qman_pfdr {
++	compatible = "fsl,qman-pfdr";
++	alloc-ranges = <0 0 0x10000 0>;
++};
++
++&soc {
++/delete-property/ dma-coherent;
++
++#include "qoriq-dpaa-eth.dtsi"
++#include "qoriq-fman3-0-6oh.dtsi"
++
++pcie@3400000 {
++	/delete-property/ iommu-map;
++};
++
++pcie@3500000 {
++	/delete-property/ iommu-map;
++};
++
++pcie@3600000 {
++	/delete-property/ iommu-map;
++};
++
++/delete-node/ iommu@9000000;
++};
++
++&fsldpaa {
++	ethernet@0 {
++		status = "disabled";
++	};
++	ethernet@1 {
++		status = "disabled";
++	};
++	ethernet@8 {
++		status = "okay";
++	};
++	ethernet@9 {
++		compatible = "fsl,dpa-ethernet";
++		fsl,fman-mac = <&enet7>;
++		dma-coherent;
++		status = "okay";
++	};
++};
++
++&fman0 {
++	compatible = "fsl,fman", "simple-bus";
++};
++
++&clockgen {
++	dma-coherent;
++};
++
++&scfg {
++	dma-coherent;
++};
++
++&crypto {
++	dma-coherent;
++};
++
++&dcfg {
++	dma-coherent;
++};
++
++&ifc {
++	dma-coherent;
++};
++
++&qspi {
++	dma-coherent;
++};
++
++&esdhc {
++	dma-coherent;
++};
++
++&ddr {
++	dma-coherent;
++};
++
++&tmu {
++	dma-coherent;
++};
++
++&qman {
++	dma-coherent;
++};
++
++&bman {
++	dma-coherent;
++};
++
++&bportals {
++	dma-coherent;
++};
++
++&qportals {
++	dma-coherent;
++};
++
++&dspi {
++	dma-coherent;
++};
++
++&i2c0 {
++	dma-coherent;
++};
++
++&i2c1 {
++	dma-coherent;
++};
++
++&i2c2 {
++	dma-coherent;
++};
++
++&i2c3 {
++	dma-coherent;
++};
++
++&duart0 {
++	dma-coherent;
++};
++
++&duart1 {
++	dma-coherent;
++};
++
++&duart2 {
++	dma-coherent;
++};
++
++&duart3 {
++	dma-coherent;
++};
++
++&gpio0 {
++	dma-coherent;
++};
++
++&gpio1 {
++	dma-coherent;
++};
++
++&gpio2 {
++	dma-coherent;
++};
++
++&gpio3 {
++	dma-coherent;
++};
++
++&lpuart0 {
++	dma-coherent;
++};
++
++&lpuart1 {
++	dma-coherent;
++};
++
++&lpuart2 {
++	dma-coherent;
++};
++
++&lpuart3 {
++	dma-coherent;
++};
++
++&lpuart4 {
++	dma-coherent;
++};
++
++&lpuart5 {
++	dma-coherent;
++};
++
++&ftm_alarm0 {
++	dma-coherent;
++};
++
++&wdog0 {
++	dma-coherent;
++};
++
++&edma0 {
++	dma-coherent;
++};
++
++&sata {
++	dma-coherent;
++};
++
++&qdma {
++	dma-coherent;
++};
++
++&msi1 {
++	dma-coherent;
++};
++
++&msi2 {
++	dma-coherent;
++};
++
++&msi3 {
++	dma-coherent;
++};
++
++&fman0 {
++	dma-coherent;
++};
++
++&ptp_timer0 {
++	dma-coherent;
++};
++
++&fsldpaa {
++	dma-coherent;
++};
+diff --git a/arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk.dts b/arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk.dts
+new file mode 100644
+index 000000000000..8021ca282cf3
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/qls1046a-4gb-sdk.dts
+@@ -0,0 +1,284 @@
++/*
++ * Device Tree Include file for Freescale Layerscape-1046A family SoC.
++ *
++ * Copyright 2014-2015 Freescale Semiconductor, Inc.
++ * Copyright 2018-2019 NXP
++ *
++ * Mingkai Hu <Mingkai.hu@freescale.com>
++ *
++ * This file is dual-licensed: you can use it either under the terms
++ * of the GPLv2 or the X11 license, at your option. Note that this dual
++ * licensing only applies to this file, and not this project as a
++ * whole.
++ *
++ *  a) This library is free software; you can redistribute it and/or
++ *     modify it under the terms of the GNU General Public License as
++ *     published by the Free Software Foundation; either version 2 of the
++ *     License, or (at your option) any later version.
++ *
++ *     This library is distributed in the hope that it will be useful,
++ *     but WITHOUT ANY WARRANTY; without even the implied warranty of
++ *     MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
++ *     GNU General Public License for more details.
++ *
++ * Or, alternatively,
++ *
++ *  b) Permission is hereby granted, free of charge, to any person
++ *     obtaining a copy of this software and associated documentation
++ *     files (the "Software"), to deal in the Software without
++ *     restriction, including without limitation the rights to use,
++ *     copy, modify, merge, publish, distribute, sublicense, and/or
++ *     sell copies of the Software, and to permit persons to whom the
++ *     Software is furnished to do so, subject to the following
++ *     conditions:
++ *
++ *     The above copyright notice and this permission notice shall be
++ *     included in all copies or substantial portions of the Software.
++ *
++ *     THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
++ *     EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES
++ *     OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
++ *     NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT
++ *     HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY,
++ *     WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING
++ *     FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
++ *     OTHER DEALINGS IN THE SOFTWARE.
++ *
++ *
++ * Copyright 2022 Scalys
++ *
++ * opensource@scalys.com
++ *
++ */
++
++#include "qls1046a-4gb.dts"
++#include "qoriq-qman-portals-sdk.dtsi"
++#include "qoriq-bman-portals-sdk.dtsi"
++
++&bman_fbpr {
++	compatible = "fsl,bman-fbpr";
++	alloc-ranges = <0 0 0x10000 0>;
++};
++&qman_fqd {
++	compatible = "fsl,qman-fqd";
++	alloc-ranges = <0 0 0x10000 0>;
++};
++&qman_pfdr {
++	compatible = "fsl,qman-pfdr";
++	alloc-ranges = <0 0 0x10000 0>;
++};
++
++&soc {
++/delete-property/ dma-coherent;
++
++#include "qoriq-dpaa-eth.dtsi"
++#include "qoriq-fman3-0-6oh.dtsi"
++
++pcie@3400000 {
++	/delete-property/ iommu-map;
++};
++
++pcie@3500000 {
++	/delete-property/ iommu-map;
++};
++
++pcie@3600000 {
++	/delete-property/ iommu-map;
++};
++
++/delete-node/ iommu@9000000;
++};
++
++&fsldpaa {
++	ethernet@0 {
++		status = "disabled";
++	};
++	ethernet@1 {
++		status = "disabled";
++	};
++	ethernet@8 {
++		status = "disabled";
++	};
++	ethernet@9 {
++		compatible = "fsl,dpa-ethernet";
++		fsl,fman-mac = <&enet7>;
++		dma-coherent;
++		status = "disabled";
++	};
++};
++
++&fman0 {
++	compatible = "fsl,fman", "simple-bus";
++};
++
++&clockgen {
++	dma-coherent;
++};
++
++&scfg {
++	dma-coherent;
++};
++
++&crypto {
++	dma-coherent;
++};
++
++&dcfg {
++	dma-coherent;
++};
++
++&ifc {
++	dma-coherent;
++};
++
++&qspi {
++	dma-coherent;
++};
++
++&esdhc {
++	dma-coherent;
++};
++
++&ddr {
++	dma-coherent;
++};
++
++&tmu {
++	dma-coherent;
++};
++
++&qman {
++	dma-coherent;
++};
++
++&bman {
++	dma-coherent;
++};
++
++&bportals {
++	dma-coherent;
++};
++
++&qportals {
++	dma-coherent;
++};
++
++&dspi {
++	dma-coherent;
++};
++
++&i2c0 {
++	dma-coherent;
++};
++
++&i2c1 {
++	dma-coherent;
++};
++
++&i2c2 {
++	dma-coherent;
++};
++
++&i2c3 {
++	dma-coherent;
++};
++
++&duart0 {
++	dma-coherent;
++};
++
++&duart1 {
++	dma-coherent;
++};
++
++&duart2 {
++	dma-coherent;
++};
++
++&duart3 {
++	dma-coherent;
++};
++
++&gpio0 {
++	dma-coherent;
++};
++
++&gpio1 {
++	dma-coherent;
++};
++
++&gpio2 {
++	dma-coherent;
++};
++
++&gpio3 {
++	dma-coherent;
++};
++
++&lpuart0 {
++	dma-coherent;
++};
++
++&lpuart1 {
++	dma-coherent;
++};
++
++&lpuart2 {
++	dma-coherent;
++};
++
++&lpuart3 {
++	dma-coherent;
++};
++
++&lpuart4 {
++	dma-coherent;
++};
++
++&lpuart5 {
++	dma-coherent;
++};
++
++&ftm_alarm0 {
++	dma-coherent;
++};
++
++&wdog0 {
++	dma-coherent;
++};
++
++&edma0 {
++	dma-coherent;
++};
++
++&sata {
++	dma-coherent;
++};
++
++&qdma {
++	dma-coherent;
++};
++
++&msi1 {
++	dma-coherent;
++};
++
++&msi2 {
++	dma-coherent;
++};
++
++&msi3 {
++	dma-coherent;
++};
++
++&fman0 {
++	dma-coherent;
++};
++
++&ptp_timer0 {
++	dma-coherent;
++};
++
++&fsldpaa {
++	dma-coherent;
++};
+diff --git a/arch/arm64/boot/dts/freescale/qls1046a-4gb-xfi.dts b/arch/arm64/boot/dts/freescale/qls1046a-4gb-xfi.dts
+new file mode 100644
+index 000000000000..e880d203a2b4
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/qls1046a-4gb-xfi.dts
+@@ -0,0 +1,327 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Device Tree Include file for Freescale Layerscape-1046A family SoC.
++ *
++ * Copyright 2016 Freescale Semiconductor, Inc.
++ * Copyright 2017-2018 NXP
++ *
++ * Mingkai Hu <mingkai.hu@nxp.com>
++ *
++ * Copyright 2022 Scalys
++ *
++ * opensource@scalys.com
++ */
++
++/dts-v1/;
++
++#include "fsl-ls1046a.dtsi"
++
++/ {
++	model = "QLS1046A-4GB dev Board";
++	compatible = "fsl,ls1046a";
++
++	aliases {
++        ethernet0 = &enet2;
++		ethernet1 = &enet3;
++		ethernet2 = &enet4;
++		ethernet3 = &enet5;
++		ethernet4 = &enet6;
++		ethernet5 = &enet7;
++		ethernet6 = &enet0;
++		ethernet7 = &enet1;
++		serial0 = &duart0;
++		serial1 = &duart1;
++		serial2 = &duart2;
++		serial3 = &duart3;
++	};
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++};
++
++&duart0 {
++	status = "okay";
++};
++
++&duart1 {
++	status = "okay";
++};
++
++&esdhc {
++	disable-wp;
++	cd-gpios = <&gpio3 3 IRQ_TYPE_LEVEL_LOW>;
++	cd-debounce-delay-ms = <10>;
++	cd-inverted;
++	max-frequency = <25000000>;
++	status = "okay";
++	voltage-ranges = <3300 3300>;
++};
++
++&i2c0 {
++	status = "okay";
++	clock-frequency = <400000>;
++	
++	adt7476: thermal@2e {
++		compatible = "adi,adt7476";
++		reg = <0x2e>;
++	};
++	
++	ucd9220: powermanager@4e {
++		compatible = "ti,ucd9224";
++		reg = <0x4e>;
++	};
++
++	emc2103: thermal@2d {
++		compatible = "microchip,emc2103";
++		reg = <0x2d>;
++	};
++	
++	eeprom_module@50 {
++		compatible = "microchip,24c1024";
++		reg = <0x50>;
++	};
++	
++	eeprom_carrier@54 {
++		compatible = "microchip,24c1024";
++		reg = <0x54>;
++	};
++	
++	
++	rtc@68 {
++		compatible = "dallas,ds1307";
++		reg = <0x68>;
++	};
++	
++	/* TCA6424 present on module at 0x23 */
++	
++	/* TCA6424 present on carrier at 0x22 */
++};
++
++&i2c1 {
++	status = "disabled";
++};
++
++&i2c2 {
++	/* I2C switch to PCIe connectors */
++	scl-gpios = <&gpio3 10 0>;
++	status = "okay";
++	
++	tca9546@70 {
++		/* Actual device is a TI TCA9546, but they are functional compatible */
++		compatible = "philips,pca9546";
++		reg = <0x70>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++		
++		i2c@0 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <0>;
++		};
++		
++		i2c@1 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <1>;
++		};
++		
++		i2c@2 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <2>;
++		};
++		
++		i2c@3 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <3>;
++		};
++	};
++};
++
++&i2c3 {
++	/* I2C switch to SFP/SFP+ connectors */
++	status = "okay";
++
++	tca9546@70 {
++		/* Actual device is a TI TCA9546, but they are functional compatible */
++		compatible = "philips,pca9546";
++		reg = <0x70>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++		
++		i2c@0 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <0>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++		};
++		
++		i2c@1 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <1>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++		};
++		
++		i2c@2 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <2>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++		};
++		
++		i2c@3 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <3>;
++			clock-frequency = <100000>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++
++		};
++	};
++};
++
++&ifc {
++	#address-cells = <2>;
++	#size-cells = <1>;
++	ranges = <0x0 0x0 0x0 0x7e800000 0x00010000
++		  0x1 0x0 0x0 0x60000000 0x02000000>;
++	status = "okay";
++	
++	nand@0,0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "fsl,ifc-nand";
++		reg = <0x0 0x0 0x10000>;
++		
++		/* Partitions should be mapped using the mtdparts argument in the bootargs */
++		status = "okay";
++	};
++
++	/*nor@1,0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "cfi-flash";
++		reg = <0x1 0x0 0x2000000>;
++		bank-width = <1>;
++		device-width = <1>;
++		status = "okay";
++	};*/
++};
++
++&qspi {
++	status = "disabled";
++};
++
++&usb0 {
++	maximum-speed = "high-speed";
++	status = "okay";
++};
++
++&usb1 {
++	maximum-speed = "high-speed";
++	status = "okay";
++};
++
++&usb2 {
++	status = "disabled";
++};
++
++#include "fsl-ls1046-post.dtsi"
++
++&fman0 {
++	ethernet@e0000 {
++		status = "disabled";
++	};
++	
++	ethernet@e2000 {
++		status = "disabled";
++	};
++	ethernet@e4000 {
++		phy-handle = <&rgmii_phy1>;
++		phy-connection-type = "rgmii";
++	};
++
++	ethernet@e6000 {
++		phy-handle = <&rgmii_phy2>;
++		phy-connection-type = "rgmii";
++	};
++
++	ethernet@e8000 {
++		phy-connection-type = "sgmii";
++		status = "okay";
++		fixed-link {
++			speed = <1000>;
++			full-duplex;
++		};
++	};
++
++	ethernet@ea000 {
++		phy-connection-type = "sgmii";
++		status = "okay";
++		fixed-link {
++			speed = <1000>;
++			full-duplex;
++		};
++	};
++
++	ethernet@f0000 { /* 10GEC1 */
++		phy-connection-type = "xgmii";
++		fixed-link {
++			speed = <10000>;
++			full-duplex;
++		};
++	};
++
++	ethernet@f2000 { /* 10GEC2 */
++		phy-connection-type = "xgmii";
++		fixed-link {
++			speed = <10000>;
++			full-duplex;
++		};
++	};
++
++	mdio@fc000 {
++		rgmii_phy1: ethernet-phy@0 {
++			reg = <0x0>;
++		};
++
++		rgmii_phy2: ethernet-phy@1 {
++			reg = <0x1>;
++		};
++	};
++};
+diff --git a/arch/arm64/boot/dts/freescale/qls1046a-4gb.dts b/arch/arm64/boot/dts/freescale/qls1046a-4gb.dts
+new file mode 100644
+index 000000000000..d6526a36207b
+--- /dev/null
++++ b/arch/arm64/boot/dts/freescale/qls1046a-4gb.dts
+@@ -0,0 +1,304 @@
++// SPDX-License-Identifier: (GPL-2.0+ OR MIT)
++/*
++ * Device Tree Include file for Freescale Layerscape-1046A family SoC.
++ *
++ * Copyright 2016 Freescale Semiconductor, Inc.
++ * Copyright 2017-2018 NXP
++ *
++ * Mingkai Hu <mingkai.hu@nxp.com>
++ *
++ * Copyright 2022 Scalys
++ *
++ * opensource@scalys.com
++ */
++
++/dts-v1/;
++
++#include "fsl-ls1046a.dtsi"
++
++/ {
++	model = "QLS1046A-4GB dev Board";
++	compatible = "fsl,ls1046a";
++
++	aliases {
++		serial0 = &duart0;
++		serial1 = &duart1;
++		serial2 = &duart2;
++		serial3 = &duart3;
++	};
++
++	chosen {
++		stdout-path = "serial0:115200n8";
++	};
++};
++
++&duart0 {
++	status = "okay";
++};
++
++&duart1 {
++	status = "okay";
++};
++
++&esdhc {
++	disable-wp;
++	cd-gpios = <&gpio3 3 IRQ_TYPE_LEVEL_LOW>;
++	cd-debounce-delay-ms = <10>;
++	cd-inverted;
++	max-frequency = <25000000>;
++	status = "okay";
++	voltage-ranges = <3300 3300>;
++};
++
++&i2c0 {
++	status = "okay";
++	clock-frequency = <400000>;
++	
++	adt7476: thermal@2e {
++		compatible = "adi,adt7476";
++		reg = <0x2e>;
++	};
++	
++	ucd9220: powermanager@4e {
++		compatible = "ti,ucd9224";
++		reg = <0x4e>;
++	};
++
++	emc2103: thermal@2d {
++		compatible = "microchip,emc2103";
++		reg = <0x2d>;
++	};
++	
++	eeprom_module@50 {
++		compatible = "microchip,24c1024";
++		reg = <0x50>;
++	};
++	
++	eeprom_carrier@54 {
++		compatible = "microchip,24c1024";
++		reg = <0x54>;
++	};
++	
++	
++	rtc@68 {
++		compatible = "dallas,ds1307";
++		reg = <0x68>;
++	};
++	
++	/* TCA6424 present on module at 0x23 */
++	
++	/* TCA6424 present on carrier at 0x22 */
++};
++
++&i2c1 {
++	status = "disabled";
++};
++
++&i2c2 {
++	/* I2C switch to PCIe connectors */
++	scl-gpios = <&gpio3 10 0>;
++	status = "okay";
++	
++	tca9546@70 {
++		/* Actual device is a TI TCA9546, but they are functional compatible */
++		compatible = "philips,pca9546";
++		reg = <0x70>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++		
++		i2c@0 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <0>;
++		};
++		
++		i2c@1 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <1>;
++		};
++		
++		i2c@2 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <2>;
++		};
++		
++		i2c@3 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <3>;
++		};
++	};
++};
++
++&i2c3 {
++	/* I2C switch to SFP/SFP+ connectors */
++	status = "okay";
++
++	tca9546@70 {
++		/* Actual device is a TI TCA9546, but they are functional compatible */
++		compatible = "philips,pca9546";
++		reg = <0x70>;
++		#address-cells = <1>;
++		#size-cells = <0>;
++		
++		i2c@0 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <0>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++		};
++		
++		i2c@1 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <1>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++		};
++		
++		i2c@2 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <2>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++		};
++		
++		i2c@3 {
++			#address-cells = <1>;
++			#size-cells = <0>;
++			reg = <3>;
++			clock-frequency = <100000>;
++			
++			at24@30 {
++				compatible = "at24,24c01";
++				reg = <0x30>;
++			};
++			sfp@50 {
++				compatible = "optics,sfp";
++				reg = <0x50>;
++			};
++
++		};
++	};
++};
++
++&ifc {
++	#address-cells = <2>;
++	#size-cells = <1>;
++	ranges = <0x0 0x0 0x0 0x7e800000 0x00010000
++		  0x1 0x0 0x0 0x60000000 0x02000000>;
++	status = "okay";
++	
++	nand@0,0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "fsl,ifc-nand";
++		reg = <0x0 0x0 0x10000>;
++		
++		/* Partitions should be mapped using the mtdparts argument in the bootargs */
++		status = "okay";
++	};
++
++	/*nor@1,0 {
++		#address-cells = <1>;
++		#size-cells = <1>;
++		compatible = "cfi-flash";
++		reg = <0x1 0x0 0x2000000>;
++		bank-width = <1>;
++		device-width = <1>;
++		status = "okay";
++	};*/
++};
++
++&qspi {
++	status = "disabled";
++};
++
++&usb0 {
++	maximum-speed = "high-speed";
++	status = "okay";
++};
++
++&usb1 {
++	maximum-speed = "high-speed";
++	status = "okay";
++};
++
++&usb2 {
++	status = "disabled";
++};
++
++#include "fsl-ls1046-post.dtsi"
++
++&fman0 {
++	ethernet@e4000 {
++		phy-handle = <&rgmii_phy1>;
++		phy-connection-type = "rgmii";
++	};
++
++	ethernet@e6000 {
++		phy-handle = <&rgmii_phy2>;
++		phy-connection-type = "rgmii";
++	};
++
++	ethernet@e8000 {
++		phy-connection-type = "sgmii";
++		status = "okay";
++		fixed-link {
++			speed = <1000>;
++			full-duplex;
++		};
++	};
++
++	ethernet@ea000 {
++		phy-connection-type = "sgmii";
++		status = "okay";
++		fixed-link {
++			speed = <1000>;
++			full-duplex;
++		};
++	};
++
++	ethernet@f0000 { /* 10GEC1 */
++		status = "disabled";
++	};
++
++	ethernet@f2000 { /* 10GEC2 */
++		status = "disabled";
++	};
++
++	mdio@fc000 {
++		rgmii_phy1: ethernet-phy@0 {
++			reg = <0x0>;
++		};
++
++		rgmii_phy2: ethernet-phy@1 {
++			reg = <0x1>;
++		};
++	};
++};
+diff --git a/arch/arm64/configs/qls1046a-4gb.config b/arch/arm64/configs/qls1046a-4gb.config
+new file mode 100644
+index 000000000000..560aee2822e8
+--- /dev/null
++++ b/arch/arm64/configs/qls1046a-4gb.config
+@@ -0,0 +1,72 @@
++#
++# First unset s configs from defconfig and lsdk.confg
++#
++# CONFIG_OPTEE is not set
++# CONFIG_SPI_FSL_QUADSPI is not set
++# CONFIG_MTD_SPI_NOR_USE_4K_SECTORS is not set
++
++#
++# Misc
++#
++CONFIG_COMPAT_NETLINK_MESSAGES=y
++CONFIG_WEXT_CORE=y
++CONFIG_WEXT_PROC=y
++CONFIG_FW_LOADER_USER_HELPER=y
++CONFIG_MTD_CFI_BE_BYTE_SWAP=y
++CONFIG_MMC_SDHCI_BIG_ENDIAN_32BIT_BYTE_SWAPPER=y
++CONFIG_FSL_RAID=y
++CONFIG_FSL_SLEEP_FSM=y
++CONFIG_FONTS=y
++CONFIG_FONT_AUTOSELECT=y
++CONFIG_BLK_DEV_NVME=y
++
++#
++# Filesystems
++#
++CONFIG_MTD=y
++CONFIG_MTD_UBI=y
++CONFIG_UBIFS_FS=y
++# CONFIG_UBIFS_FS_ADVANCED_COMPR is not set
++CONFIG_UBIFS_FS_LZO=y
++CONFIG_UBIFS_FS_ZLIB=y
++CONFIG_NFSD=m
++
++# 
++# Networking
++#
++CONFIG_MDIO_BUS_MUX_GPIO=y
++CONFIG_CFG80211=m
++CONFIG_MAC80211=m
++CONFIG_RTL_CARDS=y
++CONFIG_SYN_COOKIES=y
++
++#
++# Monitoring 
++#
++CONFIG_HWMON_VID=y
++CONFIG_SENSORS_ADT7475=y
++CONFIG_SENSORS_LM90=y
++CONFIG_PMBUS=y
++CONFIG_SENSORS_PMBUS=y
++CONFIG_SENSORS_UCD9200=y
++CONFIG_SENSORS_INA2XX=y
++CONFIG_SENSORS_EMC2103=y
++CONFIG_THERMAL_GOV_FAIR_SHARE=y
++CONFIG_THERMAL_GOV_USER_SPACE=y
++CONFIG_QORIQ_THERMAL=y
++
++#
++# USB
++#
++CONFIG_USB=y
++CONFIG_USB_HID=y
++CONFIG_USB_STORAGE=y
++CONFIG_MEDIA_SUPPORT=m
++CONFIG_MEDIA_CAMERA_SUPPORT=y
++CONFIG_MEDIA_USB_SUPPORT=y
++CONFIG_USB_VIDEO_CLASS=m
++
++# CONFIG_MXC_HANTRO_845 is not set
++# CONFIG_MXC_HANTRO_845_H1 is not set
++# CONFIG_MXC_HANTRO_VC8000E is not set
++# CONFIG_MXC_HANTRO_V4L2 is not set
