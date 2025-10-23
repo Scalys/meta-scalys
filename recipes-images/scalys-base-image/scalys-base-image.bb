@@ -17,6 +17,8 @@ IMAGE_INSTALL += "\
     aziotd \
     aziot-keys \
     u-boot-mmc-boot \
+    composite-firmware \
+    flash-fw \
 "
 
 TOOLCHAIN_HOST_TASK += "nativesdk-cmake"
